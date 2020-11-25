@@ -6,41 +6,27 @@ package time
 
 import "errors"
 
-// These are predefined layouts for use in Time.Format and time.Parse.
-// The reference time used in the layouts is the specific time:
+// 这是 Time.Format 和 time.Parse 使用的预定义布局（layout）。
+// 布局中使用的参考时间是特定时间：
 //	Mon Jan 2 15:04:05 MST 2006
-// which is Unix time 1136239445. Since MST is GMT-0700,
-// the reference time can be thought of as
+// 对应的 Unix 时间是 1136239445。由于 MST(Mountain Standard Time) 使用时区是 GMT-0700,
+// 所以参考时间也可以表示为：
 //	01/02 03:04:05PM '06 -0700
-// To define your own format, write down what the reference time would look
-// like formatted your way; see the values of constants like ANSIC,
-// StampMicro or Kitchen for examples. The model is to demonstrate what the
-// reference time looks like so that the Format and Parse methods can apply
-// the same transformation to a general time value.
+// 如果要定义您自己的格式，请使用该时间来写您希望的格式，表示使用哪种方式来格式化；
+// 有关示例请参照 ANSIC，StampMicro 或 Kitchen。
+// 这个模型是为了演示参考时间是什么样子，以便 Format 和 Parse 方法可以对所有时间进行相同的转换。
 //
-// Some valid layouts are invalid time values for time.Parse, due to formats
-// such as _ for space padding and Z for zone information.
+// 一些有效的时间布局对于 time.Parse 来说是无效的时间值，是由于例如 "_" 表示空格填充，Z 表示区域信息等格式导致的。
 //
-// Within the format string, an underscore _ represents a space that may be
-// replaced by a digit if the following number (a day) has two digits; for
-// compatibility with fixed-width Unix time formats.
+// 在表示格式的字符串中， 下划线 _ 表示可以用一位数字代替的空格（如果他后面的数字有两位），以便兼容Unix定长时间格式。
 //
-// A decimal point followed by one or more zeros represents a fractional
-// second, printed to the given number of decimal places. A decimal point
-// followed by one or more nines represents a fractional second, printed to
-// the given number of decimal places, with trailing zeros removed.
-// When parsing (only), the input may contain a fractional second
-// field immediately after the seconds field, even if the layout does not
-// signify its presence. In that case a decimal point followed by a maximal
-// series of digits is parsed as a fractional second.
+// 小数点后跟0到多个'0'，表示秒数的小数部分，输出时会生成和'0'一样多的小数位；小数点后跟0到多个'9'，表示秒数的小数部分，输出时会生成和'9'一样多的小数位但会将拖尾的'0'去掉。（只有）解析时，输入可以在秒字段后面紧跟一个小数部分，即使格式字符串里没有指明该部分。此时，小数点及其后全部的数字都会成为秒的小数部分。
 //
-// Numeric time zone offsets format as follows:
+// 数字表示的时区格式如下：
 //	-0700  ±hhmm
 //	-07:00 ±hh:mm
 //	-07    ±hh
-// Replacing the sign in the format with a Z triggers
-// the ISO 8601 behavior of printing Z instead of an
-// offset for the UTC zone. Thus:
+// 用Z替换格式字符串中的符号会触发 ISO 8601 打印Z的行为（输出Z而不是UTC时区偏移量）就像这样:
 //	Z0700  Z or ±hhmm
 //	Z07:00 Z or ±hh:mm
 //	Z07    Z or ±hh
