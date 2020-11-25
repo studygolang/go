@@ -1,6 +1,6 @@
 <!--{
-	"Title": "The Go Memory Model",
-	"Subtitle": "Version of May 31, 2014",
+	"Title": "Go 内存模型",
+	"Subtitle": "版本：2014年5月31日",
 	"Path": "/ref/mem"
 }-->
 
@@ -13,147 +13,109 @@ span.event {
 }
 </style>
 
-<h2>Introduction</h2>
+<h2>介绍</h2>
 
 <p>
-The Go memory model specifies the conditions under which
-reads of a variable in one goroutine can be guaranteed to
-observe values produced by writes to the same variable in a different goroutine.
+Go 内存模型规定了一些条件，在这些条件下，可以确保在一个 goroutine 中读取变量时能够观察到在另一个 goroutine 中写入该变量的值。
 </p>
 
 
-<h2>Advice</h2>
+<h2>忠告</h2>
 
 <p>
-Programs that modify data being simultaneously accessed by multiple goroutines
-must serialize such access.
+程序在修改被多个 goroutine 同时访问的数据时必须序列化该访问。
 </p>
 
 <p>
-To serialize access, protect the data with channel operations or other synchronization primitives
-such as those in the <a href="/pkg/sync/"><code>sync</code></a>
-and <a href="/pkg/sync/atomic/"><code>sync/atomic</code></a> packages.
+要序列化该访问，请使用通道操作或者其他同步原语（例如<a href="/pkg/sync/"><code> sync </code></a>和<a href="/pkg/sync/atomic/"><code> sync/atomic </code></a>包中的原语）保护数据。
 </p>
 
 <p>
-If you must read the rest of this document to understand the behavior of your program,
-you are being too clever.
+如果您的程序行为必须通过阅读本文档其余部分才能理解，那么您一定是太聪明了。
 </p>
 
 <p>
-Don't be clever.
+别自作聪明。
 </p>
 
-<h2>Happens Before</h2>
+<h2>先行发生</h2>
 
 <p>
-Within a single goroutine, reads and writes must behave
-as if they executed in the order specified by the program.
-That is, compilers and processors may reorder the reads and writes
-executed within a single goroutine only when the reordering
-does not change the behavior within that goroutine
-as defined by the language specification.
-Because of this reordering, the execution order observed
-by one goroutine may differ from the order perceived
-by another.  For example, if one goroutine
-executes <code>a = 1; b = 2;</code>, another might observe
-the updated value of <code>b</code> before the updated value of <code>a</code>.
+在单个 goroutine 中，读和写的执行顺序必须和它们程序中指定的顺序一样。也就是说，仅在不会改变语言规范定义的 goroutine 的行为时，编译器和处理器才会对单个 goroutine 中执行读和写的指令进行重排序。
+由于存在重排序，一个 goroutine 中观察到的执行顺序可能与另一个 goroutine 中观察到的执行顺序不同。例如，如果一个 goroutine 执行 <code>a = 1; b = 2;</code>，另一个 goroutine 可能会在观
+察到 <code>a</code> 的更新值之前先观察到 <code>b</code> 的更新值。
 </p>
 
 <p>
-To specify the requirements of reads and writes, we define
-<i>happens before</i>, a partial order on the execution
-of memory operations in a Go program.  If event <span class="event">e<sub>1</sub></span> happens
-before event <span class="event">e<sub>2</sub></span>, then we say that <span class="event">e<sub>2</sub></span> happens after <span class="event">e<sub>1</sub></span>.
-Also, if <span class="event">e<sub>1</sub></span> does not happen before <span class="event">e<sub>2</sub></span> and does not happen
-after <span class="event">e<sub>2</sub></span>, then we say that <span class="event">e<sub>1</sub></span> and <span class="event">e<sub>2</sub></span> happen concurrently.
+为了指定读和写的要求，我们定义了<i>先行发生</i>，一种 Go 程序在执行内存操作时的偏序顺序。如果事件 <span class="event">e<sub>1</sub></span> 先行发生于事件 <span class="event">e<sub>2</sub></span>，
+那么我们说 <span class="event">e<sub>2</sub></span> 发生于 <span class="event">e<sub>1</sub></span> 之后。也就是说，如果 <span class="event">e<sub>1</sub></span> 未先行发生于 <span class="event">e<sub>2</sub></span> 且
+未发生于 <span class="event">e<sub>2</sub></span>之后，那么我们说 <span class="event">e<sub>1</sub></span> 和 <span class="event">e<sub>2</sub></span> 是并发的。
 </p>
 
 <p class="rule">
-Within a single goroutine, the happens-before order is the
-order expressed by the program.
+在单独的 goroutine 中，先行发生顺序就是程序的顺序。
 </p>
 
 <p>
-A read <span class="event">r</span> of a variable <code>v</code> is <i>allowed</i> to observe a write <span class="event">w</span> to <code>v</code>
-if both of the following hold:
+如果同时满足以下两个条件，对变量 <code>v</code> 的读 <span class="event">r</span> <i>允许</i>观察到对变量 <code>v</code> 的写 <span class="event">w</span>：
 </p>
 
 <ol>
-<li><span class="event">r</span> does not happen before <span class="event">w</span>.</li>
-<li>There is no other write <span class="event">w'</span> to <code>v</code> that happens
-    after <span class="event">w</span> but before <span class="event">r</span>.</li>
+<li><span class="event">r</span> 未先行发生于 <span class="event">w</span>。</li>
+<li>在 <span class="event">w</span> 之后，<span class="event">r</span> 之前，不存在其他对 <code>v</code> 的写 <span class="event">w'</span>。</li>
 </ol>
 
 <p>
-To guarantee that a read <span class="event">r</span> of a variable <code>v</code> observes a
-particular write <span class="event">w</span> to <code>v</code>, ensure that <span class="event">w</span> is the only
-write <span class="event">r</span> is allowed to observe.
-That is, <span class="event">r</span> is <i>guaranteed</i> to observe <span class="event">w</span> if both of the following hold:
+为了确保对变量 <code>v</code> 的读 <span class="event">r</span> 能观察到特定的对变量 <code>v</code> 的写 <span class="event">w</span>，需要确保 <span class="event">w</span> 是
+唯一能被 <span class="event">r</span> 观察到的写。也就是说，如果同时满足以下两个条件，<span class="event">r</span> 能<i>保证</i>观察到 <span class="event">w</span>：
 </p>
 
 <ol>
-<li><span class="event">w</span> happens before <span class="event">r</span>.</li>
-<li>Any other write to the shared variable <code>v</code>
-either happens before <span class="event">w</span> or after <span class="event">r</span>.</li>
+<li><span class="event">w</span> 先行发生于 <span class="event">r</span>。</li>
+<li>任何其他对共享变量 <code>v</code> 的写要么先行发生于 <span class="event">w</span> 或者发生于 <span class="event">r</span> 之后。</li>
 </ol>
 
 <p>
-This pair of conditions is stronger than the first pair;
-it requires that there are no other writes happening
-concurrently with <span class="event">w</span> or <span class="event">r</span>.
+这对条件比第一对要更加严格；它要求没有其他的写和 <span class="event">w</span> 或者 <span class="event">r</span> 是并发的。
 </p>
 
 <p>
-Within a single goroutine,
-there is no concurrency, so the two definitions are equivalent:
-a read <span class="event">r</span> observes the value written by the most recent write <span class="event">w</span> to <code>v</code>.
-When multiple goroutines access a shared variable <code>v</code>,
-they must use synchronization events to establish
-happens-before conditions that ensure reads observe the
-desired writes.
+但单个 goroutine 中，不存在并发，所以这个定义是等价的：读操作 <span class="event">r</span> 能观察到最近对变量 <code>v</code> 的写 <span class="event">w</span>。
+当多个 goroutine 访问共享变量 <code>v</code> 时，它们必须通过同步事件建立先行发生顺序来确保读能观察到预期的写。
 </p>
 
 <p>
-The initialization of variable <code>v</code> with the zero value
-for <code>v</code>'s type behaves as a write in the memory model.
+将变量 <code>v</code> 初始化为 <code>v</code> 对应类型的零值，在内存模型中表现为一次写。
 </p>
 
 <p>
-Reads and writes of values larger than a single machine word
-behave as multiple machine-word-sized operations in an
-unspecified order.
+对大于当个机器字（machine word）的读写表现为不确定顺序的多次机器字大小的读写。
 </p>
 
-<h2>Synchronization</h2>
+<h2>同步</h2>
 
-<h3>Initialization</h3>
+<h3>初始化</h3>
 
 <p>
-Program initialization runs in a single goroutine,
-but that goroutine may create other goroutines,
-which run concurrently.
+程序初始化在单个 goroutine 中运行，但是该 goroutine 可能会创建其他并发运行的 goroutine。
 </p>
 
 <p class="rule">
-If a package <code>p</code> imports package <code>q</code>, the completion of
-<code>q</code>'s <code>init</code> functions happens before the start of any of <code>p</code>'s.
+如果一个包 <code>p</code> 导入了包 <code>q</code>，<code>q</code> 的 <code>init</code> 函数会在任何 <code>p</code> 的函数启动前执行完成。
 </p>
 
 <p class="rule">
-The start of the function <code>main.main</code> happens after
-all <code>init</code> functions have finished.
+<code>main.main</code> 会在所有 <code>init</code> 函数执行结束后启动。
 </p>
 
-<h3>Goroutine creation</h3>
+<h3>Goroutine 的创建</h3>
 
 <p class="rule">
-The <code>go</code> statement that starts a new goroutine
-happens before the goroutine's execution begins.
+<code>go</code> 语句开启一个新的 goroutine 先行发生于该 goroutine 执行的开始。
 </p>
 
 <p>
-For example, in this program:
+例如，这段程序中：
 </p>
 
 <pre>
@@ -170,15 +132,13 @@ func hello() {
 </pre>
 
 <p>
-calling <code>hello</code> will print <code>"hello, world"</code>
-at some point in the future (perhaps after <code>hello</code> has returned).
+调用 <code>hello</code> 会在将来的某个时间打印出 <code>"hello, world"</code>（可能在 <code>hello</code> 返回之后）。
 </p>
 
-<h3>Goroutine destruction</h3>
+<h3>Goroutine 的销毁</h3>
 
 <p>
-The exit of a goroutine is not guaranteed to happen before
-any event in the program.  For example, in this program:
+Goroutine 无法保证在程序中某个事件发生之前退出。例如，这段程序中：
 </p>
 
 <pre>
@@ -191,34 +151,25 @@ func hello() {
 </pre>
 
 <p>
-the assignment to <code>a</code> is not followed by
-any synchronization event, so it is not guaranteed to be
-observed by any other goroutine.
-In fact, an aggressive compiler might delete the entire <code>go</code> statement.
+对 <code>a</code> 进行赋值后没有任何同步事件，因此它无法保证能被其他 goroutine 观察到。实际上，一个激进的编译器可能会删除整条 <code>go</code> 语句。
 </p>
 
 <p>
-If the effects of a goroutine must be observed by another goroutine,
-use a synchronization mechanism such as a lock or channel
-communication to establish a relative ordering.
+如果一个 goroutine 的作用必须被另一个 goroutine 观察到，需使用锁或者通道通信之类的同步机制来建立相对顺序。
 </p>
 
-<h3>Channel communication</h3>
+<h3>通道通信</h3>
 
 <p>
-Channel communication is the main method of synchronization
-between goroutines.  Each send on a particular channel
-is matched to a corresponding receive from that channel,
-usually in a different goroutine.
+通道通信是多个 goroutine 之间进行同步的主要方式。在特定通道上的每一次发送操作都有与之对应的接收操作，通常是在不同的 goroutine 中。
 </p>
 
 <p class="rule">
-A send on a channel happens before the corresponding
-receive from that channel completes.
+在通道上的发送先行发生于相应的接收完成。
 </p>
 
 <p>
-This program:
+这段程序中：
 </p>
 
 <pre>
@@ -238,31 +189,23 @@ func main() {
 </pre>
 
 <p>
-is guaranteed to print <code>"hello, world"</code>.  The write to <code>a</code>
-happens before the send on <code>c</code>, which happens before
-the corresponding receive on <code>c</code> completes, which happens before
-the <code>print</code>.
+可以保证打印出 <code>"hello, world"</code>。对 <code>a</code> 的写先行发生于在 <code>c</code> 上的发送，发送先行发生于在 <code>c</code> 上的接收，接收先行发生于 <code>print</code>。
 </p>
 
 <p class="rule">
-The closing of a channel happens before a receive that returns a zero value
-because the channel is closed.
+如果关闭通道先行发生于接收，那么通道会返回零值给接收者。
 </p>
 
 <p>
-In the previous example, replacing
-<code>c &lt;- 0</code> with <code>close(c)</code>
-yields a program with the same guaranteed behavior.
+在上一个例子中，用 <code>close(c)</code> 替换 <code>c &lt;- 0</code> 也能保证该程序产生相同的行为。
 </p>
 
 <p class="rule">
-A receive from an unbuffered channel happens before
-the send on that channel completes.
+从无缓冲通道接收先行发生于对该通道进行的发送完成。
 </p>
 
 <p>
-This program (as above, but with the send and receive statements swapped and
-using an unbuffered channel):
+这段程序（与上面的相同，但交换了发送和接收语句的位置，且使用无缓冲通道）:
 </p>
 
 <pre>
@@ -282,37 +225,24 @@ func main() {
 </pre>
 
 <p>
-is also guaranteed to print <code>"hello, world"</code>.  The write to <code>a</code>
-happens before the receive on <code>c</code>, which happens before
-the corresponding send on <code>c</code> completes, which happens
-before the <code>print</code>.
+也可以保证打印出 <code>"hello, world"</code>。对 <code>a</code> 的写先行发生于对 <code>c</code> 的接收，接收先行发生于对 <code>c</code> 的发送，发送先行发生于 <code>print</code>。
 </p>
 
 <p>
-If the channel were buffered (e.g., <code>c = make(chan int, 1)</code>)
-then the program would not be guaranteed to print
-<code>"hello, world"</code>.  (It might print the empty string,
-crash, or do something else.)
+如果该通道是带缓冲的（例如，<code>c = make(chan int, 1)</code>），则该程序无法保证能打印出 <code>"hello, world"</code>。（它可能会打印空字符串，崩溃，或者做些别的事情。）
 </p>
 
 <p class="rule">
-The <i>k</i>th receive on a channel with capacity <i>C</i> happens before the <i>k</i>+<i>C</i>th send from that channel completes.
+在一个容量为 <i>C</i> 的通道上，第 <i>k</i> 次接收先行发生于第 <i>k</i>+<i>C</i> 次发送完成。
 </p>
 
 <p>
-This rule generalizes the previous rule to buffered channels.
-It allows a counting semaphore to be modeled by a buffered channel:
-the number of items in the channel corresponds to the number of active uses,
-the capacity of the channel corresponds to the maximum number of simultaneous uses,
-sending an item acquires the semaphore, and receiving an item releases
-the semaphore.
-This is a common idiom for limiting concurrency.
+该规则将上一条规则在缓冲通道上进行泛化。它允许通过缓冲通道对计数信号量进行建模：通道中项的个数相当于活跃使用的数量，通道的容量相当于最大同时使用的数量，发送一个项消耗一个信号量，结束一个项释放一个信号量。
+这是限制并发的常见做法。
 </p>
 
 <p>
-This program starts a goroutine for every entry in the work list, but the
-goroutines coordinate using the <code>limit</code> channel to ensure
-that at most three are running work functions at a time.
+这段程序为 work 列表中的每一个项都开启了一个 goroutine，但是所有的 goroutine 通过 <code>limit</code> 通道协调以保证同时最多3个运行的 work 函数（w）。
 </p>
 
 <pre>
@@ -330,20 +260,19 @@ func main() {
 }
 </pre>
 
-<h3>Locks</h3>
+<h3>锁</h3>
 
 <p>
-The <code>sync</code> package implements two lock data types,
-<code>sync.Mutex</code> and <code>sync.RWMutex</code>.
+<code>sync</code> 包实现了两种锁数据类型，<code>sync.Mutex</code> 和 <code>sync.RWMutex</code>。
 </p>
 
 <p class="rule">
-For any <code>sync.Mutex</code> or <code>sync.RWMutex</code> variable <code>l</code> and <i>n</i> &lt; <i>m</i>,
-call <i>n</i> of <code>l.Unlock()</code> happens before call <i>m</i> of <code>l.Lock()</code> returns.
+对于任何 <code>sync.Mutex</code> 或者 <code>sync.RWMutex</code> 类型的变量 <code>l</code> 以及 <i>n</i> &lt; <i>m</i>，
+对 <code>l.Unlock()</code> 的第 <i>n</i> 次调用先行发生于对 <code>l.Lock()</code> 的第 <i>m</i> 次调用的返回。
 </p>
 
 <p>
-This program:
+这段程序中：
 </p>
 
 <pre>
@@ -364,36 +293,28 @@ func main() {
 </pre>
 
 <p>
-is guaranteed to print <code>"hello, world"</code>.
-The first call to <code>l.Unlock()</code> (in <code>f</code>) happens
-before the second call to <code>l.Lock()</code> (in <code>main</code>) returns,
-which happens before the <code>print</code>.
+可以保证会打印出 <code>"hello, world"</code>。对 <code>l.Unlock()</code> (在 <code>f</code> 中）的第一次调用先行发生于
+对 <code>l.Lock()</code> （在 <code>main</code> 中）的第二次调用的返回，该返回先行发生于 <code>print</code>。
 </p>
 
 <p class="rule">
-For any call to <code>l.RLock</code> on a <code>sync.RWMutex</code> variable <code>l</code>,
-there is an <i>n</i> such that the <code>l.RLock</code> happens (returns) after call <i>n</i> to
-<code>l.Unlock</code> and the matching <code>l.RUnlock</code> happens
-before call <i>n</i>+1 to <code>l.Lock</code>.
+对于任何 <code>sync.RWMutex</code> 类型的变量 <code>l</code> 的调用 <code>l.RLock</code>，存在一个 <i>n</i>，使得 <code>l.RLock</code> （返回）发生于对 <code>l.Unlock</code> 的第 <i>n</i> 次调用之后，
+且对 <code>l.RUnlock</code> 的调用先行发生于对 <code>l.Lock</code> 的第 <i>n</i>+1 次调用。
 </p>
 
 <h3>Once</h3>
 
 <p>
-The <code>sync</code> package provides a safe mechanism for
-initialization in the presence of multiple goroutines
-through the use of the <code>Once</code> type.
-Multiple threads can execute <code>once.Do(f)</code> for a particular <code>f</code>,
-but only one will run <code>f()</code>, and the other calls block
-until <code>f()</code> has returned.
+<code>sync</code> 包通过 <code>Once</code> 类型为存在多个 goroutine 的情况下提供了安全的初始化机制。多个线程可以在 <code>f</code> 上执行 <code>once.Do(f)</code>，但是只有一个线程会执行 <code>f()</code>，
+而其他的调用都会被阻塞，直到 <code>f()</code> 返回。
 </p>
 
 <p class="rule">
-A single call of <code>f()</code> from <code>once.Do(f)</code> happens (returns) before any call of <code>once.Do(f)</code> returns.
+通过 <code>once.Do(f)</code> 对 <code>f()</code> 的单次调用（返回）先行发生于任何其他对 <code>once.Do(f)</code> 的调用.
 </p>
 
 <p>
-In this program:
+这段程序中：
 </p>
 
 <pre>
@@ -416,25 +337,19 @@ func twoprint() {
 </pre>
 
 <p>
-calling <code>twoprint</code> will call <code>setup</code> exactly
-once.
-The <code>setup</code> function will complete before either call
-of <code>print</code>.
-The result will be that <code>"hello, world"</code> will be printed
-twice.
+调用 <code>twoprint</code> 只会调用 <code>setup</code> 一次。在任何对 <code>print</code> 的调用之前，<code>setup</code> 函数会执行完毕。
+结果为 <code>"hello, world"</code> 被打印两次。
 </p>
 
-<h2>Incorrect synchronization</h2>
+<h2>错误的同步</h2>
 
 <p>
-Note that a read <span class="event">r</span> may observe the value written by a write <span class="event">w</span>
-that happens concurrently with <span class="event">r</span>.
-Even if this occurs, it does not imply that reads happening after <span class="event">r</span>
-will observe writes that happened before <span class="event">w</span>.
+注意，对 <span class="event">r</span> 的读可能会观察到与 <span class="event">r</span> 同时发生的写 <span class="event">w</span>。即使发生这种情况，
+也不意味着在 <span class="event">r</span> 之后发生的读会观察到先行发生于 <span class="event">w</span> 的写。
 </p>
 
 <p>
-In this program:
+这段程序中：
 </p>
 
 <pre>
@@ -457,17 +372,15 @@ func main() {
 </pre>
 
 <p>
-it can happen that <code>g</code> prints <code>2</code> and then <code>0</code>.
+可能 <code>g</code> 会先打印出 <code>2</code>，然后打印出 <code>0</code>。
 </p>
 
 <p>
-This fact invalidates a few common idioms.
+这个事实否定了一些常见做法。
 </p>
 
 <p>
-Double-checked locking is an attempt to avoid the overhead of synchronization.
-For example, the <code>twoprint</code> program might be
-incorrectly written as:
+双重检查锁为了避免同步开销过大的一种尝试。例如，<code>twoprint</code> 程序可能会被错误的写成：
 </p>
 
 <pre>
@@ -493,14 +406,11 @@ func twoprint() {
 </pre>
 
 <p>
-but there is no guarantee that, in <code>doprint</code>, observing the write to <code>done</code>
-implies observing the write to <code>a</code>.  This
-version can (incorrectly) print an empty string
-instead of <code>"hello, world"</code>.
+但是这里不能保证在 <code>doprint</code> 中能观察到对 <code>done</code> 的写隐含能观察到对 <code>a</code> 的写。这个版本会（错误地）打印出空字符串，而不是 <code>"hello, world"</code>。
 </p>
 
 <p>
-Another incorrect idiom is busy waiting for a value, as in:
+另一个错误的常见做法是对一个值的忙等待，例如：
 </p>
 
 <pre>
@@ -521,18 +431,12 @@ func main() {
 </pre>
 
 <p>
-As before, there is no guarantee that, in <code>main</code>,
-observing the write to <code>done</code>
-implies observing the write to <code>a</code>, so this program could
-print an empty string too.
-Worse, there is no guarantee that the write to <code>done</code> will ever
-be observed by <code>main</code>, since there are no synchronization
-events between the two threads.  The loop in <code>main</code> is not
-guaranteed to finish.
+同上，这里不能保证在 <code>main</code> 中能观察到对 <code>done</code> 的写隐含能观察到对 <code>a</code> 的写，所有这段程序也会打印空字符串。
+更糟的是，因为两个线程没有同步，因此无法保证对 <code>done</code> 的写总能被 <code>main</code> 观察到。<code>main</code> 中的循环无法保证一定能结束。
 </p>
 
 <p>
-There are subtler variants on this theme, such as this program.
+这个主题有微妙的变体，例如这段程序。
 </p>
 
 <pre>
@@ -557,12 +461,9 @@ func main() {
 </pre>
 
 <p>
-Even if <code>main</code> observes <code>g != nil</code> and exits its loop,
-there is no guarantee that it will observe the initialized
-value for <code>g.msg</code>.
+即使 <code>main</code> 能观察到 <code>g != nil</code> 并退出循环，也无法保证它能观察到初始化之后的 <code>g.msg</code>。
 </p>
 
 <p>
-In all these examples, the solution is the same:
-use explicit synchronization.
+在这里所有的例子中，解决方案都是相同的：使用显示的同步。
 </p>
