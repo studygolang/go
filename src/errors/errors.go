@@ -2,64 +2,64 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package errors implements functions to manipulate errors.
+// errors 包实现了处理错误的函数。
 //
-// The New function creates errors whose only content is a text message.
+// 函数 func New(text string) error 会创建仅包含文本信息的 error。
 //
-// The Unwrap, Is and As functions work on errors that may wrap other errors.
-// An error wraps another error if its type has the method
+// 函数 Unwrap、Is 和 As 可以处理包装其他 error 的 error。
+// 如果一个 error 具有该方法，则该 error 包含另一个 error。
 //
 //	Unwrap() error
 //
-// If e.Unwrap() returns a non-nil error w, then we say that e wraps w.
+// 如果 e.Unwrap() 返回了一个非空(nil)的错误 w，那么我们说 e 包装了 w。
 //
-// Unwrap unpacks wrapped errors. If its argument's type has an
-// Unwrap method, it calls the method once. Otherwise, it returns nil.
+// Unwrap 将解包被包装的 error。如果其参数拥有解包的方法，就调用它一次。否则将返回 nil。
 //
-// A simple way to create wrapped errors is to call fmt.Errorf and apply the %w verb
-// to the error argument:
+// 可以通过调用 fmt.Errorf 并添加 %w 参数来简单创建一个包装了 error 的 error。
 //
 //	errors.Unwrap(fmt.Errorf("... %w ...", ..., err, ...))
 //
-// returns err.
+// 该代码段返回 err 本身。
 //
-// Is unwraps its first argument sequentially looking for an error that matches the
-// second. It reports whether it finds a match. It should be used in preference to
-// simple equality checks:
+// Is 将按照顺序展开第一个参数，依次与第二个参数进行比较。他将报告是否找到匹配的 error。
+// 他相对于简单的相等性检查来说，应当被优先使用(是更合适的方法)：
 //
-//	if errors.Is(err, os.ErrExist)
+//	if errors.Is(err, fs.ErrExist)
 //
-// is preferable to
+// 比
 //
-//	if err == os.ErrExist
+//	if err == fs.ErrExist
 //
-// because the former will succeed if err wraps os.ErrExist.
+// 更合适。
+// 因为函数 Is 在 err 包含 fs.ErrExist 时也将返回 true。
 //
-// As unwraps its first argument sequentially looking for an error that can be
-// assigned to its second argument, which must be a pointer. If it succeeds, it
-// performs the assignment and returns true. Otherwise, it returns false. The form
+// As 将按照顺序展开第一个参数，依次查找可分配给第二个参数（和第二个参数类型相符）的 error，第二个参数必须是一个指针。
+// 如果成功找到了，则执行赋值并返回 true，否则返回 false。
 //
-//	var perr *os.PathError
+// 这种形式：
+//
+//	var perr *fs.PathError
 //	if errors.As(err, &perr) {
 //		fmt.Println(perr.Path)
 //	}
 //
-// is preferable to
+// 比
 //
-//	if perr, ok := err.(*os.PathError); ok {
+//	if perr, ok := err.(*fs.PathError); ok {
 //		fmt.Println(perr.Path)
 //	}
 //
-// because the former will succeed if err wraps an *os.PathError.
+// 更合适。
+// 因为当 err 包含 *fs.PathError 时，第一种形式也将返回成功。
 package errors
 
-// New returns an error that formats as the given text.
-// Each call to New returns a distinct error value even if the text is identical.
+// New 返回一个给定文本内容的 error。
+// 每次调用 New 函数都将产生一个不同的 error，即使他们的文本内容是相同的。
 func New(text string) error {
 	return &errorString{text}
 }
 
-// errorString is a trivial implementation of error.
+// errorString 是一个 error 的简单实现。
 type errorString struct {
 	s string
 }

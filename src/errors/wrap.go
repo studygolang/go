@@ -8,9 +8,7 @@ import (
 	"internal/reflectlite"
 )
 
-// Unwrap returns the result of calling the Unwrap method on err, if err's
-// type contains an Unwrap method returning error.
-// Otherwise, Unwrap returns nil.
+// 如果参数 err 的 error 类型中包含 Unwrap 方法，则 Unwrap 函数将会返回对 err 调用 Unwrap 方法的结果，否则将返回 nil。
 func Unwrap(err error) error {
 	u, ok := err.(interface {
 		Unwrap() error
@@ -21,21 +19,17 @@ func Unwrap(err error) error {
 	return u.Unwrap()
 }
 
-// Is reports whether any error in err's chain matches target.
+// Is 函数用于报告在参数 err 的错误链中是否包含任何一个与目标参数 target 相匹配的 error。
 //
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
+// 这个错误链由参数 err 本身和通过反复调用 Unwrap 获得的 error 序列组成。
 //
-// An error is considered to match a target if it is equal to that target or if
-// it implements a method Is(error) bool such that Is(target) returns true.
+// 当一个 error 和参数 target 相等或者它实现了 Is(error) bool 方法使得 Is(target) 返回 true 时，error 将被视为和参数 target 匹配成功。
 //
-// An error type might provide an Is method so it can be treated as equivalent
-// to an existing error. For example, if MyError defines
+// error 类型可能提供 Is 方法，因此可以将其视为等同于现有的 error。例如，如果 MyError 定义：
 //
 //	func (m MyError) Is(target error) bool { return target == os.ErrExist }
 //
-// then Is(MyError{}, os.ErrExist) returns true. See syscall.Errno.Is for
-// an example in the standard library.
+// 然后 Is(MyError{}, os.ErrExist) 返回 true。有关标准库中的建议，请参阅 syscall.Errno.Is。
 func Is(err, target error) bool {
 	if target == nil {
 		return err == target
@@ -58,22 +52,16 @@ func Is(err, target error) bool {
 	}
 }
 
-// As finds the first error in err's chain that matches target, and if so, sets
-// target to that error value and returns true. Otherwise, it returns false.
+// As 函数将查找在参数 err 的错误链中与参数 target 匹配的第一个 error，如果匹配到了，则将参数 target 设置为该 error 值并返回 true，否则返回 false。
 //
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
+// 这个错误链由参数 err 本身和通过反复调用 Unwrap 获得的 error 序列组成。
 //
-// An error matches target if the error's concrete value is assignable to the value
-// pointed to by target, or if the error has a method As(interface{}) bool such that
-// As(target) returns true. In the latter case, the As method is responsible for
-// setting target.
+// 当一个 error 的具体值可以被赋值给参数 target 指向的值，或者 error 拥有 As(interface{}) bool 方法使得 As(target) 返回 true 时，error 将被视为和参数 target 匹配成功。
+// 在后一种情况时，As 方法负责设置参数 target 的值。
 //
-// An error type might provide an As method so it can be treated as if it were a
-// different error type.
+// error 类型可能提供 As 方法，因此可以将其视为不同的 error 类型。
 //
-// As panics if target is not a non-nil pointer to either a type that implements
-// error, or to any interface type.
+// 如果参数 target 不是指向一个实现 error 类型或者任何接口类型的非空指针，将会引发 panic。
 func As(err error, target interface{}) bool {
 	if target == nil {
 		panic("errors: target cannot be nil")

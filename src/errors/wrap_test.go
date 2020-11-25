@@ -150,7 +150,7 @@ func TestAs(t *testing.T) {
 	}}
 	for i, tc := range testCases {
 		name := fmt.Sprintf("%d:As(Errorf(..., %v), %v)", i, tc.err, tc.target)
-		// Clear the target pointer, in case it was set in a previous test.
+		// 清除 target 指针, 以防在之前的测试中设置了该指针。
 		rtarget := reflect.ValueOf(tc.target)
 		rtarget.Elem().Set(reflect.Zero(reflect.TypeOf(tc.target).Elem()))
 		t.Run(name, func(t *testing.T) {
