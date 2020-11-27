@@ -203,3 +203,4 @@ func Offsetof(x ArbitraryType) uintptr
 // value returned by reflect.TypeOf(s.f).FieldAlign().
 // The return value of Alignof is a Go constant.
 func Alignof(x ArbitraryType) uintptr
+
