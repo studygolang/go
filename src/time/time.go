@@ -54,23 +54,20 @@ import (
 	_ "unsafe" // for go:linkname
 )
 
-// A Time represents an instant in time with nanosecond precision.
+// Time 代表一个纳秒精度的时间点。
 //
-// Programs using times should typically store and pass them as values,
-// not pointers. That is, time variables and struct fields should be of
-// type time.Time, not *time.Time.
+// 程序中应使用 Time 类型值来保存和传递时间，而不能用指针。
+// 就是说，表示时间的变量和字段，应为 time.Time 类型，而不是*time.Time 类型。
 //
-// A Time value can be used by multiple goroutines simultaneously except
-// that the methods GobDecode, UnmarshalBinary, UnmarshalJSON and
-// UnmarshalText are not concurrency-safe.
+// 一个 Time 类型值可以被多个 goroutines 同时使用，
+// 但 GobDecode、UnmarshalBinary、UnmarshalJSON 和 UnmarshalText 方法不是并发安全的。
 //
-// Time instants can be compared using the Before, After, and Equal methods.
-// The Sub method subtracts two instants, producing a Duration.
-// The Add method adds a Time and a Duration, producing a Time.
+// Time 可以使用Before、After和Equal方法进行比较。
+// Sub 方法让两个 Time 相减，生成一个 Duration 类型值（代表时间段）。
+// Add 方法给一个 Time 加上一个 Duration，生成一个新的 Time。
 //
-// The zero value of type Time is January 1, year 1, 00:00:00.000000000 UTC.
-// As this time is unlikely to come up in practice, the IsZero method gives
-// a simple way of detecting a time that has not been initialized explicitly.
+// Time零值代表时间点January 1, year 1, 00:00:00.000000000 UTC。
+// 因为本时间点一般不会出现在使用中，IsZero 方法提供了检验时间是否显式初始化的一个简单途径。
 //
 // Each Time has associated with it a Location, consulted when computing the
 // presentation form of the time, such as in the Format, Hour, and Year methods.
@@ -243,7 +240,7 @@ func (t Time) Equal(u Time) bool {
 	return t.sec() == u.sec() && t.nsec() == u.nsec()
 }
 
-// A Month specifies a month of the year (January = 1, ...).
+// Month 代表一年的某个月。 (一月 = 1，二月 = 2，……)
 type Month int
 
 const (
@@ -261,7 +258,7 @@ const (
 	December
 )
 
-// String returns the English name of the month ("January", "February", ...).
+// String 返回月份的英文名 ("January", "February", ...).
 func (m Month) String() string {
 	if January <= m && m <= December {
 		return longMonthNames[m-1]
@@ -271,7 +268,7 @@ func (m Month) String() string {
 	return "%!Month(" + string(buf[n:]) + ")"
 }
 
-// A Weekday specifies a day of the week (Sunday = 0, ...).
+// Weekday 代表一周的某一天 (星期日 = 0, ...).
 type Weekday int
 
 const (
@@ -284,7 +281,7 @@ const (
 	Saturday
 )
 
-// String returns the English name of the day ("Sunday", "Monday", ...).
+// String 返回当天是星期几的英文 ("Sunday", "Monday", ...).
 func (d Weekday) String() string {
 	if Sunday <= d && d <= Saturday {
 		return longDayNames[d]
@@ -551,9 +548,7 @@ func (t Time) YearDay() int {
 	return yday + 1
 }
 
-// A Duration represents the elapsed time between two instants
-// as an int64 nanosecond count. The representation limits the
-// largest representable duration to approximately 290 years.
+// Duration 类型表示两个时间点之间经过的时间。使用 int64 储存的纳秒为单位。可表示的最长时间段大约290年。
 type Duration int64
 
 const (
@@ -561,14 +556,13 @@ const (
 	maxDuration Duration = 1<<63 - 1
 )
 
-// Common durations. There is no definition for units of Day or larger
-// to avoid confusion across daylight savings time zone transitions.
+// 常见的时间段。 对于天或者更大的单位没有定义，以避免在夏时制时区切换时出现混乱（混淆）。
 //
-// To count the number of units in a Duration, divide:
+// 要将 Duration 类型值表示为某时间单元的个数，用除法：
 //	second := time.Second
 //	fmt.Print(int64(second/time.Millisecond)) // prints 1000
 //
-// To convert an integer number of units to a Duration, multiply:
+// 要将整数个某时间单元表示为 Duration 类型值，用乘法：
 //	seconds := 10
 //	fmt.Print(time.Duration(seconds)*time.Second) // prints 10s
 //
@@ -581,12 +575,10 @@ const (
 	Hour                 = 60 * Minute
 )
 
-// String returns a string representing the duration in the form "72h3m0.5s".
-// Leading zero units are omitted. As a special case, durations less than one
-// second format use a smaller unit (milli-, micro-, or nanoseconds) to ensure
-// that the leading digit is non-zero. The zero duration formats as 0s.
+// String 返回的时间段以类似于 "72h3m0.5s" 的字符串来表示.
+// 最开头的 0 值单元将被省略。 如果时间段小于1秒，会使用 "ms"、"us"、"ns" 来保证第一个单元的数字不是0；如果时间段为0，会返回 "0s"。
 func (d Duration) String() string {
-	// Largest time is 2540400h10m10.000000000s
+	// 最大的时间是 2540400h10m10.000000000s
 	var buf [32]byte
 	w := len(buf)
 
@@ -597,8 +589,7 @@ func (d Duration) String() string {
 	}
 
 	if u < uint64(Second) {
-		// Special case: if duration is smaller than a second,
-		// use smaller units, like 1.2ms
+		// 特殊情况：如果 Duration 小于一秒，将会使用更小的单位，如 1.2 ms
 		var prec int
 		w--
 		buf[w] = 's'
@@ -607,17 +598,17 @@ func (d Duration) String() string {
 		case u == 0:
 			return "0s"
 		case u < uint64(Microsecond):
-			// print nanoseconds
+			// 打印纳秒
 			prec = 0
 			buf[w] = 'n'
 		case u < uint64(Millisecond):
-			// print microseconds
+			// 打印微秒
 			prec = 3
 			// U+00B5 'µ' micro sign == 0xC2 0xB5
-			w-- // Need room for two bytes.
+			w-- // 需要两个字节的空间
 			copy(buf[w:], "µ")
 		default:
-			// print milliseconds
+			// 打印毫秒
 			prec = 6
 			buf[w] = 'm'
 		}
@@ -629,19 +620,19 @@ func (d Duration) String() string {
 
 		w, u = fmtFrac(buf[:w], u, 9)
 
-		// u is now integer seconds
+		// u 现在是整数秒
 		w = fmtInt(buf[:w], u%60)
 		u /= 60
 
-		// u is now integer minutes
+		// u 现在是整数分钟
 		if u > 0 {
 			w--
 			buf[w] = 'm'
 			w = fmtInt(buf[:w], u%60)
 			u /= 60
 
-			// u is now integer hours
-			// Stop at hours because days can be different lengths.
+			// u 现在是整数小时
+			// 到小时即可停止了因为天的长度可能不同。（because days can be different lengths.）
 			if u > 0 {
 				w--
 				buf[w] = 'h'
@@ -699,13 +690,13 @@ func fmtInt(buf []byte, v uint64) int {
 	return w
 }
 
-// Nanoseconds returns the duration as an integer nanosecond count.
+// Nanoseconds 返回一个以纳秒为单位的整数(int64)时间段计数。
 func (d Duration) Nanoseconds() int64 { return int64(d) }
 
-// Microseconds returns the duration as an integer microsecond count.
+// Microseconds 返回一个以微秒为单位的整数(int64)时间段计数。
 func (d Duration) Microseconds() int64 { return int64(d) / 1e3 }
 
-// Milliseconds returns the duration as an integer millisecond count.
+// Milliseconds 返回一个以毫秒为单位的整数(int64)时间段计数。
 func (d Duration) Milliseconds() int64 { return int64(d) / 1e6 }
 
 // These methods return float64 because the dominant
@@ -717,29 +708,29 @@ func (d Duration) Milliseconds() int64 { return int64(d) / 1e6 }
 // where, say, float64(d.Nanoseconds())/1e9 would have rounded
 // differently.
 
-// Seconds returns the duration as a floating point number of seconds.
+// Seconds 将 Duration 作为以秒为单位的浮点数(float64)返回。
 func (d Duration) Seconds() float64 {
 	sec := d / Second
 	nsec := d % Second
 	return float64(sec) + float64(nsec)/1e9
 }
 
-// Minutes returns the duration as a floating point number of minutes.
+// Minutes 将 Duration 作为以分钟为单位的浮点数(float64)返回。
 func (d Duration) Minutes() float64 {
 	min := d / Minute
 	nsec := d % Minute
 	return float64(min) + float64(nsec)/(60*1e9)
 }
 
-// Hours returns the duration as a floating point number of hours.
+// Hours 将 Duration 作为以小时为单位的浮点数(float64)返回。
 func (d Duration) Hours() float64 {
 	hour := d / Hour
 	nsec := d % Hour
 	return float64(hour) + float64(nsec)/(60*60*1e9)
 }
 
-// Truncate returns the result of rounding d toward zero to a multiple of m.
-// If m <= 0, Truncate returns d unchanged.
+// Truncate 返回一个比 d 小但最接近 d 且是 m 倍数的 Duration。
+// 如果 m <= 0， Truncate 将返回 d。
 func (d Duration) Truncate(m Duration) Duration {
 	if m <= 0 {
 		return d
@@ -747,18 +738,17 @@ func (d Duration) Truncate(m Duration) Duration {
 	return d - d%m
 }
 
-// lessThanHalf reports whether x+x < y but avoids overflow,
-// assuming x and y are both positive (Duration is signed).
+// lessThanHalf 以一种避免溢出的方式来报告 x+x<y 的结果，假设 x 和 y 都是正的。（Duration 有符号)
 func lessThanHalf(x, y Duration) bool {
 	return uint64(x)+uint64(x) < uint64(y)
 }
 
-// Round returns the result of rounding d to the nearest multiple of m.
-// The rounding behavior for halfway values is to round away from zero.
-// If the result exceeds the maximum (or minimum)
-// value that can be stored in a Duration,
-// Round returns the maximum (or minimum) duration.
-// If m <= 0, Round returns d unchanged.
+// Round 返回一个最接近 d 且是 m 倍数的 Duration。
+// 中间值的取整行为是 round away from zero(向远离零的方向取整)模式。
+//
+// 如果其结果超过 Duration 所能储存的最大或最小范围(溢出)，则 Round 将会直接返回最大值或最小值。
+//
+// 如果 m <= 0，Round 将会返回 d。
 func (d Duration) Round(m Duration) Duration {
 	if m <= 0 {
 		return d
@@ -772,7 +762,7 @@ func (d Duration) Round(m Duration) Duration {
 		if d1 := d - m + r; d1 < d {
 			return d1
 		}
-		return minDuration // overflow
+		return minDuration // 溢出(overflow)
 	}
 	if lessThanHalf(r, m) {
 		return d - r
@@ -780,7 +770,7 @@ func (d Duration) Round(m Duration) Duration {
 	if d1 := d + m - r; d1 > d {
 		return d1
 	}
-	return maxDuration // overflow
+	return maxDuration // 溢出(overflow)
 }
 
 // Add returns the time t+d.
@@ -837,12 +827,11 @@ func (t Time) Sub(u Time) Duration {
 	}
 }
 
-// Since returns the time elapsed since t.
-// It is shorthand for time.Now().Sub(t).
+// Since 返回从 t 到现在经过的时间，等价于 time.Now().Sub(t)。
 func Since(t Time) Duration {
 	var now Time
 	if t.wall&hasMonotonic != 0 {
-		// Common case optimization: if t has monotonic time, then Sub will use only it.
+		// 对于常见的情况优化 : 如果 t 有 Monotonic Time(单调时间), 则只使用它。
 		now = Time{hasMonotonic, runtimeNano() - startNano, nil}
 	} else {
 		now = Now()
@@ -850,12 +839,11 @@ func Since(t Time) Duration {
 	return now.Sub(t)
 }
 
-// Until returns the duration until t.
-// It is shorthand for t.Sub(time.Now()).
+// Until 返回直到 t 的时间，等价于 t.Sub(time.Now())。
 func Until(t Time) Duration {
 	var now Time
 	if t.wall&hasMonotonic != 0 {
-		// Common case optimization: if t has monotonic time, then Sub will use only it.
+		// 对于常见的情况优化 : 如果 t 有 Monotonic Time(单调时间), 则只使用它。
 		now = Time{hasMonotonic, runtimeNano() - startNano, nil}
 	} else {
 		now = Now()

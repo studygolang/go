@@ -109,19 +109,17 @@ func byteString(p []byte) string {
 
 var badData = errors.New("malformed time zone information")
 
-// LoadLocationFromTZData returns a Location with the given name
-// initialized from the IANA Time Zone database-formatted data.
-// The data should be in the format of a standard IANA time zone file
-// (for example, the content of /etc/localtime on Unix systems).
+// LoadLocationFromTZData 返回一个从 IANA 时区数据库的格式化方式进行初始化且具有给定参数 name 为名字的 Location。
+// 参数 data 应采用标准 IANA 时区文件的格式（例如，Unix系统上的 /etc/localtime 的内容）。
 func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 	d := dataIO{data, false}
 
-	// 4-byte magic "TZif"
+	// 4-byte magic "TZif" (使用魔术字符 "TZif" 判断参数 data 是否正确)
 	if magic := d.read(4); string(magic) != "TZif" {
 		return nil, badData
 	}
 
-	// 1-byte version, then 15 bytes of padding
+	// 第一个字符为版本，然后是填充的15个字符。（1-byte version, then 15 bytes of padding ）
 	var version int
 	var p []byte
 	if p = d.read(16); len(p) != 16 {
@@ -139,13 +137,13 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 		}
 	}
 
-	// six big-endian 32-bit integers:
-	//	number of UTC/local indicators
-	//	number of standard/wall indicators
-	//	number of leap seconds
-	//	number of transition times
-	//	number of local time zones
-	//	number of characters of time zone abbrev strings
+	// six big-endian 32-bit integers: （六个大端模式的 32 位整数）
+	//	number of UTC/local indicators （表示 UTC/local 的数）
+	//	number of standard/wall indicators （表示 standard/wall 的数）
+	//	number of leap seconds （表示闰秒的数）
+	//	number of transition times （表示过渡时间的数）
+	//	number of local time zones （表示当地时区的数）
+	//	number of characters of time zone abbrev strings （表示时区缩写字符串的字符的数）
 	const (
 		NUTCLocal = iota
 		NStdWall
@@ -166,14 +164,11 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 		n[i] = int(nn)
 	}
 
-	// If we have version 2 or 3, then the data is first written out
-	// in a 32-bit format, then written out again in a 64-bit format.
-	// Skip the 32-bit format and read the 64-bit one, as it can
-	// describe a broader range of dates.
-
+	// 如果是版本 2 或者版本 3，则首先以 32 位格式写出数据，然后再以 64 位格式写出数据。
+	// 跳过 32 位格式并且阅读 64位格式，因为它能描述更广泛的日期。
 	is64 := false
 	if version > 1 {
-		// Skip the 32-bit data.
+		// 跳过 32-bit 数据。
 		skip := n[NTime]*4 +
 			n[NTime] +
 			n[NZone]*6 +
@@ -181,13 +176,13 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 			n[NLeap]*8 +
 			n[NStdWall] +
 			n[NUTCLocal]
-		// Skip the version 2 header that we just read.
+		// 跳过版本2的 header。
 		skip += 4 + 16
 		d.read(skip)
 
 		is64 = true
 
-		// Read the counts again, they can differ.
+		// 再次读取计数,他们可能不同。(Read the counts again, they can differ.)
 		for i := 0; i < 6; i++ {
 			nn, ok := d.big4()
 			if !ok {
@@ -205,30 +200,28 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 		size = 8
 	}
 
-	// Transition times.
+	// Transition times.(过渡时间)
 	txtimes := dataIO{d.read(n[NTime] * size), false}
 
-	// Time zone indices for transition times.
+	// Time zone indices for transition times. (过渡时间的时区索引)
 	txzones := d.read(n[NTime])
 
-	// Zone info structures
+	// Zone info structures. (区域信息结构体)
 	zonedata := dataIO{d.read(n[NZone] * 6), false}
 
-	// Time zone abbreviations.
+	// Time zone abbreviations. (时区缩写)
 	abbrev := d.read(n[NChar])
 
-	// Leap-second time pairs
+	// Leap-second time pairs (闰秒时间对)
 	d.read(n[NLeap] * (size + 4))
 
-	// Whether tx times associated with local time types
-	// are specified as standard time or wall time.
+	// 是否将与本地时间相关联的 tx times 指定为标准时间或挂钟时间（Wall Time）。
 	isstd := d.read(n[NStdWall])
 
-	// Whether tx times associated with local time types
-	// are specified as UTC or local time.
+	// 是否将与本地时间相关联的 tx times 指定为 UTC 或本地时间（Local Time）。
 	isutc := d.read(n[NUTCLocal])
 
-	if d.error { // ran out of data
+	if d.error { // 数据用完了(ran out of data)
 		return nil, badData
 	}
 
@@ -238,13 +231,13 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 		extend = string(rest[1 : len(rest)-1])
 	}
 
-	// Now we can build up a useful data structure.
-	// First the zone information.
+	// 现在我们可以建立一个有用的数据结构了。
+	// 首先是区域信息
 	//	utcoff[4] isdst[1] nameindex[1]
 	nzone := n[NZone]
 	if nzone == 0 {
-		// Reject tzdata files with no zones. There's nothing useful in them.
-		// This also avoids a panic later when we add and then use a fake transition (golang.org/issue/29437).
+		// 拒绝没有区域的 tzdata 文件。他们在这没有任何用处。
+		// 这也避免了在以后我们添加然后使用伪造的 transition 而引起的 panic (golang.org/issue/29437)。
 		return nil, badData
 	}
 	zone := make([]zone, nzone)
@@ -268,16 +261,16 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 		}
 		zone[i].name = byteString(abbrev[b:])
 		if runtime.GOOS == "aix" && len(name) > 8 && (name[:8] == "Etc/GMT+" || name[:8] == "Etc/GMT-") {
-			// There is a bug with AIX 7.2 TL 0 with files in Etc,
-			// GMT+1 will return GMT-1 instead of GMT+1 or -01.
+			// Etc 中的文件 AIX 7.2 TL 0 （AIX 7.2 TL 0 with files in Etc）, 有一个bug。
+			// GMT+1 将返回 GMT-1 而不是 GMT+1 or -01。
 			if name != "Etc/GMT+0" {
-				// GMT+0 is OK
+				// GMT+0 是正常的。
 				zone[i].name = name[4:]
 			}
 		}
 	}
 
-	// Now the transition time info.
+	// 现在是 transition time 信息。
 	tx := make([]zoneTrans, n[NTime])
 	for i := range tx {
 		var n int64
@@ -308,16 +301,15 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 	}
 
 	if len(tx) == 0 {
-		// Build fake transition to cover all time.
-		// This happens in fixed locations like "Etc/GMT0".
+		// 构造伪造的 transition 去覆盖所有时间。
+		// 这发生在固定的位置,如："Etc/GMT0"。
 		tx = append(tx, zoneTrans{when: alpha, index: 0})
 	}
 
-	// Committed to succeed.
+	// 保证会成功。（Committed to succeed.）
 	l := &Location{zone: zone, tx: tx, name: name, extend: extend}
 
-	// Fill in the cache with information about right now,
-	// since that will be the most common lookup.
+	// 在缓存里填充当前信息，因为这将会是一种最常见的查找。
 	sec, _, _ := now()
 	for i := range tx {
 		if tx[i].when <= sec && (i+1 == len(tx) || sec < tx[i+1].when) {
@@ -327,13 +319,11 @@ func LoadLocationFromTZData(name string, data []byte) (*Location, error) {
 			if i+1 < len(tx) {
 				l.cacheEnd = tx[i+1].when
 			} else if l.extend != "" {
-				// If we're at the end of the known zone transitions,
-				// try the extend string.
+				// 如果我们在已知空间的末尾进行转换，请尝试进行拓展字符串。
 				if name, _, estart, eend, ok := tzset(l.extend, l.cacheEnd, sec); ok {
 					l.cacheStart = estart
 					l.cacheEnd = eend
-					// Find the zone that is returned by tzset,
-					// the last transition is not always the correct zone.
+					// 找到 tzset 返回的区域，最后一次的转换并不总是正确的区域。
 					for i, z := range l.zone {
 						if z.name == name {
 							zoneIdx = uint8(i)

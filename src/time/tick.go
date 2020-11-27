@@ -55,11 +55,10 @@ func (t *Ticker) Reset(d Duration) {
 	modTimer(&t.r, when(d), int64(d), t.r.f, t.r.arg, t.r.seq)
 }
 
-// Tick is a convenience wrapper for NewTicker providing access to the ticking
-// channel only. While Tick is useful for clients that have no need to shut down
-// the Ticker, be aware that without a way to shut it down the underlying
-// Ticker cannot be recovered by the garbage collector; it "leaks".
-// Unlike NewTicker, Tick will return nil if d <= 0.
+// Tick 是 NewTicker 的封装，只提供对 Ticker 的通道的访问。
+// 虽然 Tick 对于不需要关闭的 Ticker 很好用，但是请注意，如果没有关闭 Ticker 的方法，GC 将不会回收底层的 Ticker 而产生"泄漏"。
+//
+// 如果参数 d Duration 小于等于 0，则 Tick 将返回 nil。
 func Tick(d Duration) <-chan Time {
 	if d <= 0 {
 		return nil

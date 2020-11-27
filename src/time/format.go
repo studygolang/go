@@ -31,31 +31,22 @@ import "errors"
 //	Z07:00 Z or ±hh:mm
 //	Z07    Z or ±hh
 //
-// The recognized day of week formats are "Mon" and "Monday".
-// The recognized month formats are "Jan" and "January".
+// 可识别的星期格式是 "Mon" 和 "Monday"。
+// 可识别的月份格式是 "Jan" 和 "January".
 //
-// The formats 2, _2, and 02 are unpadded, space-padded, and zero-padded
-// day of month. The formats __2 and 002 are space-padded and zero-padded
-// three-character day of year; there is no unpadded day of year format.
+// "2"，"_2" 和 "02" 表示每月天数（某个月的第几天）的无填充，空格填充和零填充。
+// "__2"，"002" 表示每年天数（某一年的第几天）的三个字符的空格填充和零填充，在描述一年中的某天时，没有不进行填充的日期格式。
 //
-// Text in the format string that is not recognized as part of the reference
-// time is echoed verbatim during Format and expected to appear verbatim
-// in the input to Parse.
+// 格式字符串中未被识别为参考时间的部分，在 Format 输出中将会被逐字打印出来，并且预计会逐字出现在 Parse 的输入里。
 //
-// The executable example for Time.Format demonstrates the working
-// of the layout string in detail and is a good reference.
+// Time.Format 的示例详细说明了 Layout 字符串的工作原理，是一个很好的参考。
 //
-// Note that the RFC822, RFC850, and RFC1123 formats should be applied
-// only to local times. Applying them to UTC times will use "UTC" as the
-// time zone abbreviation, while strictly speaking those RFCs require the
-// use of "GMT" in that case.
-// In general RFC1123Z should be used instead of RFC1123 for servers
-// that insist on that format, and RFC3339 should be preferred for new protocols.
-// RFC3339, RFC822, RFC822Z, RFC1123, and RFC1123Z are useful for formatting;
-// when used with time.Parse they do not accept all the time formats
-// permitted by the RFCs and they do accept time formats not formally defined.
-// The RFC3339Nano format removes trailing zeros from the seconds field
-// and thus may not sort correctly once formatted.
+// 请注意，RFC822，RFC850 和 RFC1123 格式应仅适用于本地时间。
+// 将他们使用在 UTC 时间时将使用 "UTC" 作为时区的缩写，而严格上来说，上述 RFC 在这种情况下应该需要使用 "GMT"。
+//
+// 对于坚持使用这种格式的服务器，应该使用 RFC1123Z 而不是 RFC1123，在新协议中，RFC3339 应该是首选。
+// RFC3339，RFC822，RFC822Z，RFC1123 和 RFC1123Z 可以用于格式化。当使用 time.Parse 时，他们不接受 RFC 的所有时间格式，但接受未正式定义的时间格式。
+// RFC3339Nano 格式从秒字段中删除了结尾的零，所以一旦格式化，可能无法正确排序。
 const (
 	ANSIC       = "Mon Jan _2 15:04:05 2006"
 	UnixDate    = "Mon Jan _2 15:04:05 MST 2006"
@@ -1352,18 +1343,16 @@ var unitMap = map[string]int64{
 	"h":  int64(Hour),
 }
 
-// ParseDuration parses a duration string.
-// A duration string is a possibly signed sequence of
-// decimal numbers, each with optional fraction and a unit suffix,
-// such as "300ms", "-1.5h" or "2h45m".
-// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+// ParseDuration解析一个时间段字符串。一个时间段字符串是一个序列，每个片段包含可选的正负号、十进制数、可选的小数部分和单位后缀，如"300ms"、"-1.5h"、"2h45m"。
+//
+// 合法的单位有"ns"、"us"(或"µs")、"ms"、"s"、"m"、"h"。
 func ParseDuration(s string) (Duration, error) {
 	// [-+]?([0-9]*(\.[0-9]*)?[a-z]+)+
 	orig := s
 	var d int64
 	neg := false
 
-	// Consume [-+]?
+	// 消费(Consume) [-+]?
 	if s != "" {
 		c := s[0]
 		if c == '-' || c == '+' {
@@ -1371,7 +1360,7 @@ func ParseDuration(s string) (Duration, error) {
 			s = s[1:]
 		}
 	}
-	// Special case: if all that is left is "0", this is zero.
+	// 特例：如果剩下的都是 "0"，那它就是 0.
 	if s == "0" {
 		return 0, nil
 	}
@@ -1380,25 +1369,25 @@ func ParseDuration(s string) (Duration, error) {
 	}
 	for s != "" {
 		var (
-			v, f  int64       // integers before, after decimal point
+			v, f  int64       // 小数点前后的整数
 			scale float64 = 1 // value = v + f/scale
 		)
 
 		var err error
 
-		// The next character must be [0-9.]
+		// 下一个字符必须是 [0-9.]
 		if !(s[0] == '.' || '0' <= s[0] && s[0] <= '9') {
 			return 0, errors.New("time: invalid duration " + quote(orig))
 		}
-		// Consume [0-9]*
+		// 消费(Consume) [0-9]*
 		pl := len(s)
 		v, s, err = leadingInt(s)
 		if err != nil {
 			return 0, errors.New("time: invalid duration " + quote(orig))
 		}
-		pre := pl != len(s) // whether we consumed anything before a period
+		pre := pl != len(s) // 是否在之前消费过任何东西(whether we consumed anything before a period)
 
-		// Consume (\.[0-9]*)?
+		// 消费(Consume) (\.[0-9]*)?
 		post := false
 		if s != "" && s[0] == '.' {
 			s = s[1:]
@@ -1411,7 +1400,7 @@ func ParseDuration(s string) (Duration, error) {
 			return 0, errors.New("time: invalid duration " + quote(orig))
 		}
 
-		// Consume unit.
+		// 消费(Consume) unit.
 		i := 0
 		for ; i < len(s); i++ {
 			c := s[i]
@@ -1434,17 +1423,17 @@ func ParseDuration(s string) (Duration, error) {
 		}
 		v *= unit
 		if f > 0 {
-			// float64 is needed to be nanosecond accurate for fractions of hours.
-			// v >= 0 && (f*unit/scale) <= 3.6e+12 (ns/h, h is the largest unit)
+			// float64 需要精确到纳秒/小时。（float64 is needed to be nanosecond accurate for fractions of hours.）
+			// v >= 0 && (f*unit/scale) <= 3.6e+12 (ns/h, h 是最大单位)
 			v += int64(float64(f) * (float64(unit) / scale))
 			if v < 0 {
-				// overflow
+				// 溢出(overflow)
 				return 0, errors.New("time: invalid duration " + quote(orig))
 			}
 		}
 		d += v
 		if d < 0 {
-			// overflow
+			// 溢出(overflow)
 			return 0, errors.New("time: invalid duration " + quote(orig))
 		}
 	}

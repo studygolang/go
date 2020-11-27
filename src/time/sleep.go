@@ -4,8 +4,8 @@
 
 package time
 
-// Sleep pauses the current goroutine for at least the duration d.
-// A negative or zero duration causes Sleep to return immediately.
+// Sleep 会阻塞当前 goroutine 至少参数 Duration 表示的时间段。
+// 当参数 Duration 表示的时间段小于等于 0 时，Sleep 函数会立刻返回。
 func Sleep(d Duration)
 
 // Interface to timers implemented in package runtime.
@@ -138,12 +138,12 @@ func sendTime(c interface{}, seq uintptr) {
 	}
 }
 
-// After waits for the duration to elapse and then sends the current time
-// on the returned channel.
-// It is equivalent to NewTimer(d).C.
-// The underlying Timer is not recovered by the garbage collector
-// until the timer fires. If efficiency is a concern, use NewTimer
-// instead and call Timer.Stop if the timer is no longer needed.
+// After 会等待参数 Duration 表示的持续时间过去，然后在返回的 channel 中发送当前时间。
+// 它等价于 NewTimer(d).C。
+//
+// Timer 创建的底层计时器不会在传入的时间段走完之前被 GC 回收。
+// 如果您担心效能问题，可以改用 NewTimer。
+// 如果在持续时间结束前不再使用 Timer 请调用 Timer.Stop。
 func After(d Duration) <-chan Time {
 	return NewTimer(d).C
 }

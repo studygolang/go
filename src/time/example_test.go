@@ -92,7 +92,7 @@ func ExampleParseDuration() {
 	hours, _ := time.ParseDuration("10h")
 	complex, _ := time.ParseDuration("1h10m10s")
 	micro, _ := time.ParseDuration("1µs")
-	// The package also accepts the incorrect but common prefix u for micro.
+	// 在描述微秒时，还可以使用不正确但通用的 "us" 来表示。
 	micro2, _ := time.ParseDuration("1us")
 
 	fmt.Println(hours)
@@ -487,20 +487,19 @@ func ExampleLoadLocation() {
 }
 
 func ExampleLocation() {
-	// China doesn't have daylight saving. It uses a fixed 8 hour offset from UTC.
+	// 中国不使用夏令时。它使用与 UTC 固定的 8 小时偏移量（东八区、UTC+8）。
 	secondsEastOfUTC := int((8 * time.Hour).Seconds())
 	beijing := time.FixedZone("Beijing Time", secondsEastOfUTC)
 
-	// If the system has a timezone database present, it's possible to load a location
-	// from that, e.g.:
+	// 如果系统存在时区数据库，则可以这样加载时区：
 	//    newYork, err := time.LoadLocation("America/New_York")
 
-	// Creating a time requires a location. Common locations are time.Local and time.UTC.
+	// 创建时间需要一个 Location。常用的 locations 是 time.Local 和 time.UTC。
 	timeInUTC := time.Date(2009, 1, 1, 12, 0, 0, 0, time.UTC)
 	sameTimeInBeijing := time.Date(2009, 1, 1, 20, 0, 0, 0, beijing)
 
-	// Although the UTC clock time is 1200 and the Beijing clock time is 2000, Beijing is
-	// 8 hours ahead so the two dates actually represent the same instant.
+	// 虽然 UTC 的时钟时间是 1200，北京的时钟时间是 2000, 但北京时间要快 8 小时。
+	// 所以两个时间实际上代表着同一时刻。
 	timesAreEqual := timeInUTC.Equal(sameTimeInBeijing)
 	fmt.Println(timesAreEqual)
 

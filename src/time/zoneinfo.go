@@ -12,10 +12,9 @@ import (
 
 //go:generate env ZONEINFO=$GOROOT/lib/time/zoneinfo.zip go run genzabbrs.go -output zoneinfo_abbrs_windows.go
 
-// A Location maps time instants to the zone in use at that time.
-// Typically, the Location represents the collection of time offsets
-// in use in a geographical area. For many Locations the time offset varies
-// depending on whether daylight savings time is in use at the time instant.
+// Location 将瞬时时间映射到当时正在使用的时间区域。
+// 通常，Location 表示在某个地理区域中所使用的时间偏移的集合。
+// 对于许多位置，时间偏移量会根据瞬时时间是否使用夏时令（Daylight Saving Time：DST）而所有不同。
 type Location struct {
 	name string
 	zone []zone
@@ -63,7 +62,7 @@ const (
 	omega = 1<<63 - 1 // math.MaxInt64
 )
 
-// UTC represents Universal Coordinated Time (UTC).
+// UTC 表示世界标准时间(通用协调时间/零时区) (UTC).
 var UTC *Location = &utcLoc
 
 // utcLoc is separate so that get can refer to &utcLoc
@@ -71,12 +70,11 @@ var UTC *Location = &utcLoc
 // even if a badly behaved client has changed UTC.
 var utcLoc = Location{name: "UTC"}
 
-// Local represents the system's local time zone.
-// On Unix systems, Local consults the TZ environment
-// variable to find the time zone to use. No TZ means
-// use the system default /etc/localtime.
-// TZ="" means use UTC.
-// TZ="foo" means use file foo in the system timezone directory.
+// Local代表系统本地，对应本地时区。
+// 在 Unix 系统上，Local 会查询 TZ(time zone) 环境变量来找到要使用的时区。
+// 如果没有 TZ，则会使用系统默认的 /etc/localtime。
+// TZ="" 表示使用 UTC.
+// TZ="foo" 表示在系统的时区目录中使用文件 foo。
 var Local *Location = &localLoc
 
 // localLoc is separate so that initLocal can initialize
@@ -94,14 +92,12 @@ func (l *Location) get() *Location {
 	return l
 }
 
-// String returns a descriptive name for the time zone information,
-// corresponding to the name argument to LoadLocation or FixedZone.
+// String 返回时区信息的描述性名称，与 LoadLocation 或 FixedZone 的参数 name 相对应。
 func (l *Location) String() string {
 	return l.get().name
 }
 
-// FixedZone returns a Location that always uses
-// the given zone name and offset (seconds east of UTC).
+// FixedZone 返回一个给定的地点名 name 和时间偏移量 offset(UTC 往东的秒数) 来创建并返回一个 Location。
 func FixedZone(name string, offset int) *Location {
 	l := &Location{
 		name:       name,
@@ -612,20 +608,14 @@ var errLocation = errors.New("time: invalid location name")
 var zoneinfo *string
 var zoneinfoOnce sync.Once
 
-// LoadLocation returns the Location with the given name.
+// LoadLocation 返回使用参数 name 创建的 Location.
 //
-// If the name is "" or "UTC", LoadLocation returns UTC.
-// If the name is "Local", LoadLocation returns Local.
+// 如果参数 name 是 "" 或者 "UTC" , LoadLocation 返回 UTC。
+// 如果参数 name 是 "Local", LoadLocation 返回 Local。
+// 否则, 参数 name 应该是 IANA 时区数据库里有记录的地点名（该数据库记录了地点和对应的时区），如"America/New_York"。
 //
-// Otherwise, the name is taken to be a location name corresponding to a file
-// in the IANA Time Zone database, such as "America/New_York".
-//
-// The time zone database needed by LoadLocation may not be
-// present on all systems, especially non-Unix systems.
-// LoadLocation looks in the directory or uncompressed zip file
-// named by the ZONEINFO environment variable, if any, then looks in
-// known installation locations on Unix systems,
-// and finally looks in $GOROOT/lib/time/zoneinfo.zip.
+// LoadLocation 函数需要的时区数据库可能不是所有系统都提供，特别是非 Unix 系统。
+// 此时 LoadLocation 会查找环境变量 ZONEINFO 指定目录或解压该变量指定的 zip 文件（如果有该环境变量）；然后查找Unix系统的惯例时区数据安装位置，最后查找 $GOROOT/lib/time/zoneinfo.zip。
 func LoadLocation(name string) (*Location, error) {
 	if name == "" || name == "UTC" {
 		return UTC, nil
@@ -661,7 +651,7 @@ func LoadLocation(name string) (*Location, error) {
 	return nil, firstErr
 }
 
-// containsDotDot reports whether s contains "..".
+// containsDotDot 报告参数 s 中是否包含 ".."。
 func containsDotDot(s string) bool {
 	if len(s) < 2 {
 		return false
