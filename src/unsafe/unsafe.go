@@ -3,204 +3,134 @@
 // license that can be found in the LICENSE file.
 
 /*
-	Package unsafe contains operations that step around the type safety of Go programs.
-
-	Packages that import unsafe may be non-portable and are not protected by the
-	Go 1 compatibility guidelines.
+    unsafe包中包含绕过go类型安全限制的操作，导入unsafe的其他包可能不具可移植性，并且不受Go 1兼容性准则的保护。
 */
 package unsafe
 
-// ArbitraryType is here for the purposes of documentation only and is not actually
-// part of the unsafe package. It represents the type of an arbitrary Go expression.
+// 此处ArbitraryType仅出于文档目的，实际上不是unsafe包的一部分，它表示任意Go表达式的类型。
 type ArbitraryType int
 
-// Pointer represents a pointer to an arbitrary type. There are four special operations
-// available for type Pointer that are not available for other types:
-//	- A pointer value of any type can be converted to a Pointer.
-//	- A Pointer can be converted to a pointer value of any type.
-//	- A uintptr can be converted to a Pointer.
-//	- A Pointer can be converted to a uintptr.
-// Pointer therefore allows a program to defeat the type system and read and write
-// arbitrary memory. It should be used with extreme care.
+// Pointer表示指向任意类型的指针，Pointer有四种特有操作：
+//  -任何类型的指针都可以转换为Pointer。
+//  -Pointer可以转换为任何类型的指针。
+//  -uintptr可以转换为Pointer。
+//  -Pointer可以转换为uintptr。
+// 因此，Pointer允许程序绕过类型系统并读写内存，使用时应格外小心。
 //
-// The following patterns involving Pointer are valid.
-// Code not using these patterns is likely to be invalid today
-// or to become invalid in the future.
-// Even the valid patterns below come with important caveats.
+// 以下的Pointer使用模式才是合法的。不按这些模式使用Pointer的代码目前可能失效了，或者将来可能失效，甚至下面的有些模式也带有重要警告。
 //
-// Running "go vet" can help find uses of Pointer that do not conform to these patterns,
-// but silence from "go vet" is not a guarantee that the code is valid.
+// 运行“ go vet”可以帮助查找不符合这些模式的Pointer用法，但是“ go vet”没输出警告不能保证代码就是合法的。
 //
-// (1) Conversion of a *T1 to Pointer to *T2.
-//
-// Provided that T2 is no larger than T1 and that the two share an equivalent
-// memory layout, this conversion allows reinterpreting data of one type as
-// data of another type. An example is the implementation of
-// math.Float64bits:
+// (1) 将*T1转换为Pointer再转为*T2。
+// 
+// 假定T2不大于T1，并且两个共享内存，则此转换允许将一种类型的数据重新解释为另一种类型的数据。一个例子是math.Float64bits的实现：
 //
 //	func Float64bits(f float64) uint64 {
 //		return *(*uint64)(unsafe.Pointer(&f))
 //	}
+// 
+// (2) 将Pointer转换为uintptr（不再转回Pointer）。
 //
-// (2) Conversion of a Pointer to a uintptr (but not back to Pointer).
+// 将Pointer转换为uintptr会得到所指对象内存地址（整数），uintpt的这种用法多是为了打印值。
 //
-// Converting a Pointer to a uintptr produces the memory address of the value
-// pointed at, as an integer. The usual use for such a uintptr is to print it.
+// 通常，将uintptr转为Pointer是非法的。
 //
-// Conversion of a uintptr back to Pointer is not valid in general.
+// uintptr是整数，而不是引用。将Pointer转换为uintptr会创建一个去除指针语义的整数值。即使uintptr拥有某个对象的地址，垃圾回收器也不会在对象移动时更新该uintptr的值，而uintptr也不会阻止所指对象被回收。
 //
-// A uintptr is an integer, not a reference.
-// Converting a Pointer to a uintptr creates an integer value
-// with no pointer semantics.
-// Even if a uintptr holds the address of some object,
-// the garbage collector will not update that uintptr's value
-// if the object moves, nor will that uintptr keep the object
-// from being reclaimed.
+// 下面列举的从uintptr到Pointer的转换是唯一合法的。
 //
-// The remaining patterns enumerate the only valid conversions
-// from uintptr to Pointer.
+// (3) 将Pointer转为uintptr，进行数学运算，最后转回Pointer。
 //
-// (3) Conversion of a Pointer to a uintptr and back, with arithmetic.
-//
-// If p points into an allocated object, it can be advanced through the object
-// by conversion to uintptr, addition of an offset, and conversion back to Pointer.
+// 如果p指向已分配内存对象，则可转换p为uintptr，加上一个偏移量，最后将其转换回Pointer。
 //
 //	p = unsafe.Pointer(uintptr(p) + offset)
 //
-// The most common use of this pattern is to access fields in a struct
-// or elements of an array:
+// 此模式最常见的用法是访问结构体中字段或数组中的元素：
 //
-//	// equivalent to f := unsafe.Pointer(&s.f)
+//	// 等效于 f := unsafe.Pointer(&s.f)
 //	f := unsafe.Pointer(uintptr(unsafe.Pointer(&s)) + unsafe.Offsetof(s.f))
 //
-//	// equivalent to e := unsafe.Pointer(&x[i])
+//	// 等效于 e := unsafe.Pointer(&x[i])
 //	e := unsafe.Pointer(uintptr(unsafe.Pointer(&x[0])) + i*unsafe.Sizeof(x[0]))
 //
-// It is valid both to add and to subtract offsets from a pointer in this way.
-// It is also valid to use &^ to round pointers, usually for alignment.
-// In all cases, the result must continue to point into the original allocated object.
+// 以这种方式给指针添加和减去一个偏移量都是合法的。使用＆^舍入指针（通常用于对齐）也是合法的。在所有情况下，转换结果都必须指向原分配对象。
 //
-// Unlike in C, it is not valid to advance a pointer just beyond the end of
-// its original allocation:
+// 与C语言不同，将指针指向其对象末尾是非法的：
 //
-//	// INVALID: end points outside allocated space.
+//	// INVALID: 指向分配空间之外。
 //	var s thing
 //	end = unsafe.Pointer(uintptr(unsafe.Pointer(&s)) + unsafe.Sizeof(s))
 //
-//	// INVALID: end points outside allocated space.
+//	// INVALID: 指向分配空间之外。
 //	b := make([]byte, n)
 //	end = unsafe.Pointer(uintptr(unsafe.Pointer(&b[0])) + uintptr(n))
 //
-// Note that both conversions must appear in the same expression, with only
-// the intervening arithmetic between them:
+// 请注意，两次转换必须出现在同一个表达式中，并且算术运算也只能出现在该表达式中：
 //
-//	// INVALID: uintptr cannot be stored in variable
-//	// before conversion back to Pointer.
+//	// INVALID: 在转回Pointer前，uintptr不能存储在变量中。
 //	u := uintptr(p)
 //	p = unsafe.Pointer(u + offset)
 //
-// Note that the pointer must point into an allocated object, so it may not be nil.
+// 请注意，指针必须指向已分配的对象，不能指向nil。
 //
-//	// INVALID: conversion of nil pointer
+//	// INVALID: nil指针转换。
 //	u := unsafe.Pointer(nil)
 //	p := unsafe.Pointer(uintptr(u) + offset)
 //
-// (4) Conversion of a Pointer to a uintptr when calling syscall.Syscall.
+// (4) 调用syscall.Syscall时将Pointer转换为uintptr。
 //
-// The Syscall functions in package syscall pass their uintptr arguments directly
-// to the operating system, which then may, depending on the details of the call,
-// reinterpret some of them as pointers.
-// That is, the system call implementation is implicitly converting certain arguments
-// back from uintptr to pointer.
+// syscall包中的Syscall函数将其uintptr参数直接传递给操作系统，然后操作系统根据调用情况将其中一些参数重新解释为指针。也就是说，系统调用会将某些参数从uintptr隐式地转回指针。
 //
-// If a pointer argument must be converted to uintptr for use as an argument,
-// that conversion must appear in the call expression itself:
+// 如果必须将指针参数转换为uintptr，则该转换必须出现在调用表达式中：
 //
 //	syscall.Syscall(SYS_READ, uintptr(fd), uintptr(unsafe.Pointer(p)), uintptr(n))
 //
-// The compiler handles a Pointer converted to a uintptr in the argument list of
-// a call to a function implemented in assembly by arranging that the referenced
-// allocated object, if any, is retained and not moved until the call completes,
-// even though from the types alone it would appear that the object is no longer
-// needed during the call.
+// 从类型上来看，即使调用过程中对象不再需要了，但编译器还是会确保Pointer（已转换为uintptr）作为参数传递给汇编函数时，它所指向的对象不会改变和移动，直到调用完成。
 //
-// For the compiler to recognize this pattern,
-// the conversion must appear in the argument list:
+// 为使编译器识别这种模式，转换必须出现在参数列表中：
 //
-//	// INVALID: uintptr cannot be stored in variable
-//	// before implicit conversion back to Pointer during system call.
+//	// INVALID: 系统调用中，隐式地转回Pointer前，uintptr不能存储在变量中
 //	u := uintptr(unsafe.Pointer(p))
 //	syscall.Syscall(SYS_READ, uintptr(fd), u, uintptr(n))
 //
-// (5) Conversion of the result of reflect.Value.Pointer or reflect.Value.UnsafeAddr
-// from uintptr to Pointer.
+// (5) 将reflect.Value.Pointer或reflect.Value.UnsafeAddr的值从uintptr转换为Pointer。
 //
-// Package reflect's Value methods named Pointer and UnsafeAddr return type uintptr
-// instead of unsafe.Pointer to keep callers from changing the result to an arbitrary
-// type without first importing "unsafe". However, this means that the result is
-// fragile and must be converted to Pointer immediately after making the call,
-// in the same expression:
+// reflect包的Value.Pointer和Value.UnsafeAddr方法返回的是uintptr而不是Pointer，这样调用者可将返回值改为任意类型，而无需导入unsafe包。但是，这种返回值很不稳定，必须在调用后立即在同一表达式中将其转换为Pointer：
 //
 //	p := (*int)(unsafe.Pointer(reflect.ValueOf(new(int)).Pointer()))
 //
-// As in the cases above, it is invalid to store the result before the conversion:
+// 与上述情况一样，在转换之前存储返回值是非法的：
 //
-//	// INVALID: uintptr cannot be stored in variable
-//	// before conversion back to Pointer.
+//	// INVALID: 转换回Pointer之前，uintptr不能存储在变量中。
 //	u := reflect.ValueOf(new(int)).Pointer()
 //	p := (*int)(unsafe.Pointer(u))
 //
-// (6) Conversion of a reflect.SliceHeader or reflect.StringHeader Data field to or from Pointer.
+// (6) 将reflect.SliceHeader或reflect.StringHeader字段与指针进行相互转换。
 //
-// As in the previous case, the reflect data structures SliceHeader and StringHeader
-// declare the field Data as a uintptr to keep callers from changing the result to
-// an arbitrary type without first importing "unsafe". However, this means that
-// SliceHeader and StringHeader are only valid when interpreting the content
-// of an actual slice or string value.
+// 与前面的情况一样，反射数据结构SliceHeader和StringHeader将字段Data声明为uintptr，这样调用者不导入unsafe包也可将返回值转换为任意类型。但这意味着SliceHeader和StringHeader仅在解释实际切片或字符串值时才合法。
 //
 //	var s string
 //	hdr := (*reflect.StringHeader)(unsafe.Pointer(&s)) // case 1
 //	hdr.Data = uintptr(unsafe.Pointer(p))              // case 6 (this case)
 //	hdr.Len = n
 //
-// In this usage hdr.Data is really an alternate way to refer to the underlying
-// pointer in the string header, not a uintptr variable itself.
+// 在这种用法中，hdr.Data实际上是引用字符串Header中基础指针的替代方法，而不是uintptr变量本身。
 //
-// In general, reflect.SliceHeader and reflect.StringHeader should be used
-// only as *reflect.SliceHeader and *reflect.StringHeader pointing at actual
-// slices or strings, never as plain structs.
-// A program should not declare or allocate variables of these struct types.
+// 通常，reflect.SliceHeader和reflect.StringHeader只能以*reflect.SliceHeader和*reflect.StringHeader的形式指向切片或字符串，而不能单独存在，程序中不应声明或分配这两种类型的变量。
 //
-//	// INVALID: a directly-declared header will not hold Data as a reference.
+//	// INVALID: 直接声明的Header不会作为保存数据的引用。
 //	var hdr reflect.StringHeader
 //	hdr.Data = uintptr(unsafe.Pointer(p))
 //	hdr.Len = n
-//	s := *(*string)(unsafe.Pointer(&hdr)) // p possibly already lost
+//	s := *(*string)(unsafe.Pointer(&hdr)) // p 可能已不存在
 //
 type Pointer *ArbitraryType
 
-// Sizeof takes an expression x of any type and returns the size in bytes
-// of a hypothetical variable v as if v was declared via var v = x.
-// The size does not include any memory possibly referenced by x.
-// For instance, if x is a slice, Sizeof returns the size of the slice
-// descriptor, not the size of the memory referenced by the slice.
-// The return value of Sizeof is a Go constant.
+// Sizeof接收任何类型的表达式x并返回假设变量v的字节大小，v是通过类似var v = x声明的假设变量。该大小不包括x可能引用的其他内存。例如，若x为切片，则Sizeof返回切片描述符的大小，而不是该切片所引用的内存大小。Sizeof的返回值是常数。
 func Sizeof(x ArbitraryType) uintptr
 
-// Offsetof returns the offset within the struct of the field represented by x,
-// which must be of the form structValue.field. In other words, it returns the
-// number of bytes between the start of the struct and the start of the field.
-// The return value of Offsetof is a Go constant.
+// Offsetof返回结构体x的字段偏移量，其格式必须为structValue.field。换句话说，它返回结构体起始处到字段起始处之间的字节数。Offsetof的返回值是常数。
 func Offsetof(x ArbitraryType) uintptr
 
-// Alignof takes an expression x of any type and returns the required alignment
-// of a hypothetical variable v as if v was declared via var v = x.
-// It is the largest value m such that the address of v is always zero mod m.
-// It is the same as the value returned by reflect.TypeOf(x).Align().
-// As a special case, if a variable s is of struct type and f is a field
-// within that struct, then Alignof(s.f) will return the required alignment
-// of a field of that type within a struct. This case is the same as the
-// value returned by reflect.TypeOf(s.f).FieldAlign().
-// The return value of Alignof is a Go constant.
+// Alignof接收任何类型的表达式x并返回假设变量v的对齐方式，v是通过类似var v = x声明的假设变量。它是一个最大值m，因此v的地址模m始终为零。Alignof与reflect.TypeOf(x).Align()返回的值相同。若变量s是结构体类型，而f是该结构体中字段，则Alignof(s.f)将返回该字段的对齐方式。这种情况与reflect.TypeOf(s.f).FieldAlign()的返回值相同。Alignof的返回值是常数。
 func Alignof(x ArbitraryType) uintptr
-
