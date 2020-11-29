@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-    unsafe包中包含绕过go类型安全限制的操作，导入unsafe的其他包可能不具可移植性，并且不受Go 1兼容性准则的保护。
+    unsafe包中包含绕过Go类型安全限制的操作，导入unsafe的其他包可能不具可移植性，并且不受Go 1兼容性准则的保护。
 */
 package unsafe
 
@@ -12,9 +12,9 @@ type ArbitraryType int
 
 // Pointer表示指向任意类型的指针，Pointer有四种特有操作：
 //  -任何类型的指针都可以转换为Pointer。
-//  -Pointer可以转换为任何类型的指针。
-//  -uintptr可以转换为Pointer。
-//  -Pointer可以转换为uintptr。
+//  -Pointer可转换为任何类型的指针。
+//  -uintptr可转换为Pointer。
+//  -Pointer可转换为uintptr。
 // 因此，Pointer允许程序绕过类型系统并读写内存，使用时应格外小心。
 //
 // 以下的Pointer使用模式才是合法的。不按这些模式使用Pointer的代码目前可能失效了，或者将来可能失效，甚至下面的有些模式也带有重要警告。
@@ -31,13 +31,13 @@ type ArbitraryType int
 // 
 // (2) 将Pointer转换为uintptr（不再转回Pointer）。
 //
-// 将Pointer转换为uintptr会得到所指对象内存地址（整数），uintpt的这种用法多是为了打印值。
+// 将Pointer转换为uintptr会得到所指对象内存地址（整数），uintptr的这种用法多是为了打印地址。
 //
 // 通常，将uintptr转为Pointer是非法的。
 //
 // uintptr是整数，而不是引用。将Pointer转换为uintptr会创建一个去除指针语义的整数值。即使uintptr拥有某个对象的地址，垃圾回收器也不会在对象移动时更新该uintptr的值，而uintptr也不会阻止所指对象被回收。
 //
-// 下面列举的从uintptr到Pointer的转换是唯一合法的。
+// 下面列举的从uintptr到Pointer的转换是唯一合法的模式。
 //
 // (3) 将Pointer转为uintptr，进行数学运算，最后转回Pointer。
 //
@@ -123,14 +123,19 @@ type ArbitraryType int
 //	hdr.Data = uintptr(unsafe.Pointer(p))
 //	hdr.Len = n
 //	s := *(*string)(unsafe.Pointer(&hdr)) // p 可能已不存在
-//
 type Pointer *ArbitraryType
 
-// Sizeof接收任何类型的表达式x并返回假设变量v的字节大小，v是通过类似var v = x声明的假设变量。该大小不包括x可能引用的其他内存。例如，若x为切片，则Sizeof返回切片描述符的大小，而不是该切片所引用的内存大小。Sizeof的返回值是常数。
+// Sizeof接收任何类型的表达式x并返回假设变量v的字节大小，v是通过类似var v = x声明的假设变量。该大小不包括x可能引用的其他内存。例如，若x为切片，则Sizeof返回切片描述符的大小，而不是该切片所引用的内存大小。
+// Sizeof的返回值是常数。
 func Sizeof(x ArbitraryType) uintptr
 
-// Offsetof返回结构体x的字段偏移量，其格式必须为structValue.field。换句话说，它返回结构体起始处到字段起始处之间的字节数。Offsetof的返回值是常数。
+// Offsetof返回结构体中x字段的偏移量，其类型必须为structValue.field。换句话说，它返回结构体起始处到字段起始处之间的字节数。
+// Offsetof的返回值是常数。
 func Offsetof(x ArbitraryType) uintptr
 
-// Alignof接收任何类型的表达式x并返回假设变量v的对齐方式，v是通过类似var v = x声明的假设变量。它是一个最大值m，因此v的地址模m始终为零。Alignof与reflect.TypeOf(x).Align()返回的值相同。若变量s是结构体类型，而f是该结构体中字段，则Alignof(s.f)将返回该字段的对齐方式。这种情况与reflect.TypeOf(s.f).FieldAlign()的返回值相同。Alignof的返回值是常数。
+// Alignof接收任何类型的表达式x并返回假设变量v的对齐方式，v是通过类似var v = x声明的假设变量。
+// 当为最大值m时，v的地址模m始终为零。
+// Alignof的返回值与reflect.TypeOf(x).Align()的返回值相同。
+// 一个特殊例子：假设变量s是结构体类型，而f是该结构体中字段，则Alignof(s.f)将返回该字段的对齐长度。这种情况下与reflect.TypeOf(s.f).FieldAlign()的返回值相同。
+// Alignof的返回值是常数。
 func Alignof(x ArbitraryType) uintptr
