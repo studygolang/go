@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package bytes implements functions for the manipulation of byte slices.
-// It is analogous to the facilities of the strings package.
+// bytes 包实现用于操作字节切片的功能。
+// 它类似于 string 包的功能。
 package bytes
 
 import (
@@ -12,23 +12,22 @@ import (
 	"unicode/utf8"
 )
 
-// Equal reports whether a and b
-// are the same length and contain the same bytes.
-// A nil argument is equivalent to an empty slice.
+// Equal 判断 a 和 b 是否长度相等且包含相同的字节。
+// nil 参数相当于一个空切片。
 func Equal(a, b []byte) bool {
-	// Neither cmd/compile nor gccgo allocates for these string conversions.
+	// cmd/compile 和 gccgo 都不分配这些字符串转换。
 	return string(a) == string(b)
 }
 
-// Compare returns an integer comparing two byte slices lexicographically.
-// The result will be 0 if a==b, -1 if a < b, and +1 if a > b.
-// A nil argument is equivalent to an empty slice.
+// Compare 返回一个将两个字节切片按字典比较的的整数。
+// 如果 a == b，结果将为 0；如果a < b，结果将为 -1；如果a > b，结果将为 +1。
+// nil 参数相当于一个空切片。
 func Compare(a, b []byte) int {
 	return bytealg.Compare(a, b)
 }
 
-// explode splits s into a slice of UTF-8 sequences, one per Unicode code point (still slices of bytes),
-// up to a maximum of n byte slices. Invalid UTF-8 sequences are chopped into individual bytes.
+// 将 s 分解为 UTF-8 序列的一个切片，每个 Unicode 代码点（仍然是字节切片），
+// 最多 n 个字节切片。无效的 UTF-8 序列被切成单个字节。
 func explode(s []byte, n int) [][]byte {
 	if n <= 0 {
 		n = len(s)
@@ -50,8 +49,8 @@ func explode(s []byte, n int) [][]byte {
 	return a[0:na]
 }
 
-// Count counts the number of non-overlapping instances of sep in s.
-// If sep is an empty slice, Count returns 1 + the number of UTF-8-encoded code points in s.
+// Count 对 s 中的 sep 的非重叠实例进行计数。
+// 如果 sep 是一个空切片，则 Count 返回 1 + s 中 UTF-8 编码的代码点的数目。
 func Count(s, sep []byte) int {
 	// special case
 	if len(sep) == 0 {
@@ -71,22 +70,22 @@ func Count(s, sep []byte) int {
 	}
 }
 
-// Contains reports whether subslice is within b.
+// Contains 判断子切片是否在 b 里。
 func Contains(b, subslice []byte) bool {
 	return Index(b, subslice) != -1
 }
 
-// ContainsAny reports whether any of the UTF-8-encoded code points in chars are within b.
+// ContainsAny 判断字符中 UTF-8 编码的代码点是否在 b 之内。
 func ContainsAny(b []byte, chars string) bool {
 	return IndexAny(b, chars) >= 0
 }
 
-// ContainsRune reports whether the rune is contained in the UTF-8-encoded byte slice b.
+// ContainsRune 判断 rune 是否包含在 UTF-8 编码的字节切片 b 中。.
 func ContainsRune(b []byte, r rune) bool {
 	return IndexRune(b, r) >= 0
 }
 
-// IndexByte returns the index of the first instance of c in b, or -1 if c is not present in b.
+// IndexByte 返回 b 中 c 第一个实例的索引，如果 b 中不存在 c，则返回 -1。
 func IndexByte(b []byte, c byte) int {
 	return bytealg.IndexByte(b, c)
 }
@@ -100,7 +99,7 @@ func indexBytePortable(s []byte, c byte) int {
 	return -1
 }
 
-// LastIndex returns the index of the last instance of sep in s, or -1 if sep is not present in s.
+// LastIndex 返回 s 中 sep 最后一个实例的索引；如果 s 中不存在 sep，则返回 -1。
 func LastIndex(s, sep []byte) int {
 	n := len(sep)
 	switch {
@@ -116,7 +115,7 @@ func LastIndex(s, sep []byte) int {
 	case n > len(s):
 		return -1
 	}
-	// Rabin-Karp search from the end of the string
+	// 从字符串末尾搜索 Rabin-Karp
 	hashss, pow := bytealg.HashStrRevBytes(sep)
 	last := len(s) - n
 	var h uint32
@@ -137,7 +136,7 @@ func LastIndex(s, sep []byte) int {
 	return -1
 }
 
-// LastIndexByte returns the index of the last instance of c in s, or -1 if c is not present in s.
+// LastIndexByte 返回 s 中 c 最后一个实例的索引；如果 s 中不存在 c，则返回 -1。
 func LastIndexByte(s []byte, c byte) int {
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] == c {
@@ -147,11 +146,10 @@ func LastIndexByte(s []byte, c byte) int {
 	return -1
 }
 
-// IndexRune interprets s as a sequence of UTF-8-encoded code points.
-// It returns the byte index of the first occurrence in s of the given rune.
-// It returns -1 if rune is not present in s.
-// If r is utf8.RuneError, it returns the first instance of any
-// invalid UTF-8 byte sequence.
+// IndexRune 将 s 解释为 UTF-8 编码的代码点序列。
+// 它返回给定 rune 中 s 第一次出现的字节索引。
+// 如果 s 中不存在 rune，则返回 -1。
+// 如果 r 为 utf8.RuneError，它将返回任一无效 UTF-8 字节序列的第一个实例。
 func IndexRune(s []byte, r rune) int {
 	switch {
 	case 0 <= r && r < utf8.RuneSelf:
@@ -174,19 +172,18 @@ func IndexRune(s []byte, r rune) int {
 	}
 }
 
-// IndexAny interprets s as a sequence of UTF-8-encoded Unicode code points.
-// It returns the byte index of the first occurrence in s of any of the Unicode
-// code points in chars. It returns -1 if chars is empty or if there is no code
-// point in common.
+// IndexAny 将 s 解释为 UTF-8 编码的 Unicode 代码点的序列。
+// 它返回字符中任一 Unicode 代码点 s 中最后一次出现的字节索引。
+// 如果字符为空或没有相同的代码点，则返回 -1。
 func IndexAny(s []byte, chars string) int {
 	if chars == "" {
-		// Avoid scanning all of s.
+		// 避免扫描所有 s。
 		return -1
 	}
 	if len(s) == 1 {
 		r := rune(s[0])
 		if r >= utf8.RuneSelf {
-			// search utf8.RuneError.
+			// 搜索 utf8.RuneError。
 			for _, r = range chars {
 				if r == utf8.RuneError {
 					return 0
@@ -228,14 +225,14 @@ func IndexAny(s []byte, chars string) int {
 		}
 		r, width = utf8.DecodeRune(s[i:])
 		if r != utf8.RuneError {
-			// r is 2 to 4 bytes
+			// r 2 到 4 个字节
 			if len(chars) == width {
 				if chars == string(r) {
 					return i
 				}
 				continue
 			}
-			// Use bytealg.IndexString for performance if available.
+			// 如果可用，使用 bytealg.IndexString 提高性能。
 			if bytealg.MaxLen >= width {
 				if bytealg.IndexString(chars, string(r)) >= 0 {
 					return i
@@ -252,13 +249,12 @@ func IndexAny(s []byte, chars string) int {
 	return -1
 }
 
-// LastIndexAny interprets s as a sequence of UTF-8-encoded Unicode code
-// points. It returns the byte index of the last occurrence in s of any of
-// the Unicode code points in chars. It returns -1 if chars is empty or if
-// there is no code point in common.
+// LastIndexAny 将 s 解释为 UTF-8 编码的 Unicode 代码点的序列。
+// 它返回字符中任一 Unicode 代码点 s 中 最后一次出现的字节索引。
+// 如果字符为空或没有相同的代码点，则返回 -1。
 func LastIndexAny(s []byte, chars string) int {
 	if chars == "" {
-		// Avoid scanning all of s.
+		// 避免扫描所有 s。
 		return -1
 	}
 	if len(s) > 8 {
@@ -319,7 +315,7 @@ func LastIndexAny(s []byte, chars string) int {
 				}
 				continue
 			}
-			// Use bytealg.IndexString for performance if available.
+			// 如果可用，使用 bytealg.IndexString 提高性能。
 			if bytealg.MaxLen >= size {
 				if bytealg.IndexString(chars, string(r)) >= 0 {
 					return i
@@ -336,8 +332,8 @@ func LastIndexAny(s []byte, chars string) int {
 	return -1
 }
 
-// Generic split: splits after each instance of sep,
-// including sepSave bytes of sep in the subslices.
+// 通用拆分： 在 sep 的每个实例之后拆分，
+// 包含子切片中 sep 的 sepSave 字节。
 func genSplit(s, sep []byte, sepSave, n int) [][]byte {
 	if n == 0 {
 		return nil
@@ -365,52 +361,47 @@ func genSplit(s, sep []byte, sepSave, n int) [][]byte {
 	return a[:i+1]
 }
 
-// SplitN slices s into subslices separated by sep and returns a slice of
-// the subslices between those separators.
-// If sep is empty, SplitN splits after each UTF-8 sequence.
-// The count determines the number of subslices to return:
-//   n > 0: at most n subslices; the last subslice will be the unsplit remainder.
-//   n == 0: the result is nil (zero subslices)
-//   n < 0: all subslices
+// SplitN 将 s 分割成由 sep 分割的子切片，并返回这些分隔符之间的子切片。
+// 如果 sep 为空，SplitN 在每个 UTF-8 序列之后分割。
+// 这个数量决定了返回的子切片数:
+//   n > 0: 最多 n 个子切片；最后一个子切片将是未拆分的剩余部分
+//   n == 0: 结果为 nil（零子切片）
+//   n < 0: 所有子切片
 func SplitN(s, sep []byte, n int) [][]byte { return genSplit(s, sep, 0, n) }
 
-// SplitAfterN slices s into subslices after each instance of sep and
-// returns a slice of those subslices.
-// If sep is empty, SplitAfterN splits after each UTF-8 sequence.
-// The count determines the number of subslices to return:
-//   n > 0: at most n subslices; the last subslice will be the unsplit remainder.
-//   n == 0: the result is nil (zero subslices)
-//   n < 0: all subslices
+// SplitAfterN 在每个 sep 实例后将 s 分隔成子切片，并返回这些子切片的切片。
+// 如果 sep 为空，plitAfterN 在每个 UTF-8 序列之后分割。
+// 这个数量决定了返回的子切片数:
+//   n > 0: 最多 n 个子切片；最后一个子切片将是未拆分的剩余部分
+//   n == 0: 结果为 nil（零子切片）
+//   n < 0: 所有子切片
 func SplitAfterN(s, sep []byte, n int) [][]byte {
 	return genSplit(s, sep, len(sep), n)
 }
 
-// Split slices s into all subslices separated by sep and returns a slice of
-// the subslices between those separators.
-// If sep is empty, Split splits after each UTF-8 sequence.
-// It is equivalent to SplitN with a count of -1.
+// Split 将切片 s 分割为由 sep 分割的所有子切片，并返回这些分隔符之间的子切片的切片。
+// 如果 sep 为空，则 Split 在每个 UTF-8 序列后拆分。
+// 它等效于 SplitN，计数为 -1。
 func Split(s, sep []byte) [][]byte { return genSplit(s, sep, 0, -1) }
 
-// SplitAfter slices s into all subslices after each instance of sep and
-// returns a slice of those subslices.
-// If sep is empty, SplitAfter splits after each UTF-8 sequence.
-// It is equivalent to SplitAfterN with a count of -1.
+// SplitAfter 在每个 sep 实例之后将 s 分割为所有子切片，并返回这些子切片之间的切片。
+// 如果 sep 为空，则 SplitAfter 在每个 UTF-8 序列后拆分。
+// 它等效于 SplitAfterN，计数为 -1。
 func SplitAfter(s, sep []byte) [][]byte {
 	return genSplit(s, sep, len(sep), -1)
 }
 
 var asciiSpace = [256]uint8{'\t': 1, '\n': 1, '\v': 1, '\f': 1, '\r': 1, ' ': 1}
 
-// Fields interprets s as a sequence of UTF-8-encoded code points.
-// It splits the slice s around each instance of one or more consecutive white space
-// characters, as defined by unicode.IsSpace, returning a slice of subslices of s or an
-// empty slice if s contains only white space.
+// Fields 将 s 解释为 UTF-8 编码的代码点序列。
+// 它按照一个或多个连续的空白字符（按照 unicode.IsSpace 的定义的字符）对切片 s 进行分割，
+// 返回一个 s 的子切片，如果 s 只包含空格，则返回一个空切片。
 func Fields(s []byte) [][]byte {
-	// First count the fields.
-	// This is an exact count if s is ASCII, otherwise it is an approximation.
+	// 首先计算字段。
+	// 如果 s 为 ASCII，则为精确计数，否则为近似值。
 	n := 0
 	wasSpace := 1
-	// setBits is used to track which bits are set in the bytes of s.
+	// setBits 用于跟踪在 s 字节中设置了哪些位。
 	setBits := uint8(0)
 	for i := 0; i < len(s); i++ {
 		r := s[i]
@@ -421,16 +412,16 @@ func Fields(s []byte) [][]byte {
 	}
 
 	if setBits >= utf8.RuneSelf {
-		// Some runes in the input slice are not ASCII.
+		// 输入切片中的某些符文不是 ASCII.
 		return FieldsFunc(s, unicode.IsSpace)
 	}
 
-	// ASCII fast path
+	// ASCII 快捷路径
 	a := make([][]byte, n)
 	na := 0
 	fieldStart := 0
 	i := 0
-	// Skip spaces in the front of the input.
+	// 跳过输入前面的空格。
 	for i < len(s) && asciiSpace[s[i]] != 0 {
 		i++
 	}
@@ -443,38 +434,36 @@ func Fields(s []byte) [][]byte {
 		a[na] = s[fieldStart:i:i]
 		na++
 		i++
-		// Skip spaces in between fields.
+		// 跳过字段之间的空格。
 		for i < len(s) && asciiSpace[s[i]] != 0 {
 			i++
 		}
 		fieldStart = i
 	}
-	if fieldStart < len(s) { // Last field might end at EOF.
+	if fieldStart < len(s) { // 最后一个字段可能以 EOF 结尾。
 		a[na] = s[fieldStart:len(s):len(s)]
 	}
 	return a
 }
 
-// FieldsFunc interprets s as a sequence of UTF-8-encoded code points.
-// It splits the slice s at each run of code points c satisfying f(c) and
-// returns a slice of subslices of s. If all code points in s satisfy f(c), or
-// len(s) == 0, an empty slice is returned.
+// FieldsFunc 将 s 解释为 UTF-8 编码的代码点序列。
+// 它在满足 f(c) 的每个代码点 c 处分割切片 s，并返回 s 的子切片。
+// 如果 s 中所有代码点都满足 f(c)，或 s 的长度为 0，则返回一个空切片。
 //
-// FieldsFunc makes no guarantees about the order in which it calls f(c)
-// and assumes that f always returns the same value for a given c.
+// FieldsFunc 不保证调用 f(c) 的顺序，并假定对于给定的 c，f 总是返回相同的值。
 func FieldsFunc(s []byte, f func(rune) bool) [][]byte {
-	// A span is used to record a slice of s of the form s[start:end].
-	// The start index is inclusive and the end index is exclusive.
+	// span 用于记录形式为 s[start:end] 的 s 的一部分。
+	// 开始索引是包含的，结束索引是不包含的。
 	type span struct {
 		start int
 		end   int
 	}
 	spans := make([]span, 0, 32)
 
-	// Find the field start and end indices.
-	// Doing this in a separate pass (rather than slicing the string s
-	// and collecting the result substrings right away) is significantly
-	// more efficient, possibly due to cache effects.
+	// 查找字段的开始和结束索引。
+	// 在单独的过程中执行此操作（而不是对字符串s进行切片
+	// 并立即收集结果子字符串）
+	// 可能由于缓存，效率更高。
 	start := -1 // valid span start if >= 0
 	for i := 0; i < len(s); {
 		size := 1
@@ -495,12 +484,12 @@ func FieldsFunc(s []byte, f func(rune) bool) [][]byte {
 		i += size
 	}
 
-	// Last field might end at EOF.
+	// 最后一个字段可能以 EOF 结尾。
 	if start >= 0 {
 		spans = append(spans, span{start, len(s)})
 	}
 
-	// Create subslices from recorded field indices.
+	// 根据记录的字段索引创建子切片。
 	a := make([][]byte, len(spans))
 	for i, span := range spans {
 		a[i] = s[span.start:span.end:span.end]
@@ -509,8 +498,8 @@ func FieldsFunc(s []byte, f func(rune) bool) [][]byte {
 	return a
 }
 
-// Join concatenates the elements of s to create a new byte slice. The separator
-// sep is placed between elements in the resulting slice.
+// Join 将 s 的元素连接起来以创建一个新的字节切片。
+// 分隔符 sep 放置在所得切片中的元素之间。
 func Join(s [][]byte, sep []byte) []byte {
 	if len(s) == 0 {
 		return []byte{}
@@ -533,26 +522,25 @@ func Join(s [][]byte, sep []byte) []byte {
 	return b
 }
 
-// HasPrefix tests whether the byte slice s begins with prefix.
+// HasPrefix 测试字节切片 s 是否以后缀开头。
 func HasPrefix(s, prefix []byte) bool {
 	return len(s) >= len(prefix) && Equal(s[0:len(prefix)], prefix)
 }
 
-// HasSuffix tests whether the byte slice s ends with suffix.
+// HasSuffix 测试字节切片 s 是否以后缀结尾。
 func HasSuffix(s, suffix []byte) bool {
 	return len(s) >= len(suffix) && Equal(s[len(s)-len(suffix):], suffix)
 }
 
-// Map returns a copy of the byte slice s with all its characters modified
-// according to the mapping function. If mapping returns a negative value, the character is
-// dropped from the byte slice with no replacement. The characters in s and the
-// output are interpreted as UTF-8-encoded code points.
+// Map 返回字节切片 s 的副本，其所有字符都根据映射函数进行了修改。
+// 如果映射返回负值，则将字符从字节切片中丢弃，并且不进行替换。
+// s 中的字符和输出被解释为 UTF-8 编码的代码点。
 func Map(mapping func(r rune) rune, s []byte) []byte {
-	// In the worst case, the slice can grow when mapped, making
-	// things unpleasant. But it's so rare we barge in assuming it's
-	// fine. It could also shrink but that falls out naturally.
-	maxbytes := len(s) // length of b
-	nbytes := 0        // number of bytes encoded in b
+	// 在最坏的情况下，切片会在映射时增长，让事情变得更糟。
+	// 但我们很少会会假设这是好的。
+	// 它也可以收缩，自然而然地消失。
+	maxbytes := len(s) // b 的长度
+	nbytes := 0        // 用 b 编码的字节数
 	b := make([]byte, maxbytes)
 	for i := 0; i < len(s); {
 		wid := 1
@@ -580,18 +568,16 @@ func Map(mapping func(r rune) rune, s []byte) []byte {
 	return b[0:nbytes]
 }
 
-// Repeat returns a new byte slice consisting of count copies of b.
+// Repeat 返回一个由 b 的计数副本组成的新的字节切片。
 //
-// It panics if count is negative or if
-// the result of (len(b) * count) overflows.
+// 如果 count 为负或 (len(b) * count) 的结果溢出，它会 panic。
 func Repeat(b []byte, count int) []byte {
 	if count == 0 {
 		return []byte{}
 	}
-	// Since we cannot return an error on overflow,
-	// we should panic if the repeat will generate
-	// an overflow.
-	// See Issue golang.org/issue/16237.
+	// 由于我们无法在溢出时返回错误，
+	// 如果这种重复会产生溢出，我们应该 panic。
+	// 参见 Issue golang.org/issue/16237.
 	if count < 0 {
 		panic("bytes: negative Repeat count")
 	} else if len(b)*count/count != len(b) {
@@ -607,8 +593,7 @@ func Repeat(b []byte, count int) []byte {
 	return nb
 }
 
-// ToUpper returns a copy of the byte slice s with all Unicode letters mapped to
-// their upper case.
+// ToUpper 返回字节切片 s 的副本，其中所有 Unicode 字母都映射到其大写字母。
 func ToUpper(s []byte) []byte {
 	isASCII, hasLower := true, false
 	for i := 0; i < len(s); i++ {
@@ -620,9 +605,9 @@ func ToUpper(s []byte) []byte {
 		hasLower = hasLower || ('a' <= c && c <= 'z')
 	}
 
-	if isASCII { // optimize for ASCII-only byte slices.
+	if isASCII { // 仅针对 ASCII 字节切片进行优化。
 		if !hasLower {
-			// Just return a copy.
+			// 仅返回一个副本。
 			return append([]byte(""), s...)
 		}
 		b := make([]byte, len(s))
@@ -638,8 +623,7 @@ func ToUpper(s []byte) []byte {
 	return Map(unicode.ToUpper, s)
 }
 
-// ToLower returns a copy of the byte slice s with all Unicode letters mapped to
-// their lower case.
+// 返回字节切片 s 的副本，其中所有 Unicode 字母均映射到小写字母。
 func ToLower(s []byte) []byte {
 	isASCII, hasUpper := true, false
 	for i := 0; i < len(s); i++ {
@@ -651,7 +635,7 @@ func ToLower(s []byte) []byte {
 		hasUpper = hasUpper || ('A' <= c && c <= 'Z')
 	}
 
-	if isASCII { // optimize for ASCII-only byte slices.
+	if isASCII { // 仅针对 ASCII 字节切片进行优化。
 		if !hasUpper {
 			return append([]byte(""), s...)
 		}
@@ -668,32 +652,28 @@ func ToLower(s []byte) []byte {
 	return Map(unicode.ToLower, s)
 }
 
-// ToTitle treats s as UTF-8-encoded bytes and returns a copy with all the Unicode letters mapped to their title case.
+// ToTitle 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中包含所有映射到标题大小写的 Unicode 字母。
 func ToTitle(s []byte) []byte { return Map(unicode.ToTitle, s) }
 
-// ToUpperSpecial treats s as UTF-8-encoded bytes and returns a copy with all the Unicode letters mapped to their
-// upper case, giving priority to the special casing rules.
+// ToUpperSpecial 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中所有 Unicode 字母均映射为它们的大写字母，并优先使用特殊的大小写规则。
 func ToUpperSpecial(c unicode.SpecialCase, s []byte) []byte {
 	return Map(c.ToUpper, s)
 }
 
-// ToLowerSpecial treats s as UTF-8-encoded bytes and returns a copy with all the Unicode letters mapped to their
-// lower case, giving priority to the special casing rules.
+// ToLowerSpecial 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中所有 Unicode 字母均映射为它们的小写字母，并优先使用特殊的大小写规则。
 func ToLowerSpecial(c unicode.SpecialCase, s []byte) []byte {
 	return Map(c.ToLower, s)
 }
 
-// ToTitleSpecial treats s as UTF-8-encoded bytes and returns a copy with all the Unicode letters mapped to their
-// title case, giving priority to the special casing rules.
+// ToTitleSpecial 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中所有 Unicode 字母均映射到其标题大小写，并优先使用特殊的大小写规则。
 func ToTitleSpecial(c unicode.SpecialCase, s []byte) []byte {
 	return Map(c.ToTitle, s)
 }
 
-// ToValidUTF8 treats s as UTF-8-encoded bytes and returns a copy with each run of bytes
-// representing invalid UTF-8 replaced with the bytes in replacement, which may be empty.
+// ToValidUTF8 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中每次运行的字节均表示无效的 UTF-8，并用替换的字节替换，该字节可以为空。
 func ToValidUTF8(s, replacement []byte) []byte {
 	b := make([]byte, 0, len(s)+len(replacement))
-	invalid := false // previous byte was from an invalid UTF-8 sequence
+	invalid := false // 前一个字节来自无效的 UTF-8 序列
 	for i := 0; i < len(s); {
 		c := s[i]
 		if c < utf8.RuneSelf {
@@ -718,10 +698,10 @@ func ToValidUTF8(s, replacement []byte) []byte {
 	return b
 }
 
-// isSeparator reports whether the rune could mark a word boundary.
-// TODO: update when package unicode captures more of the properties.
+// isSeparator 判断该符文是否可以标记单词边界。
+// TODO: 在程序包 unicode 捕获更多属性时更新。
 func isSeparator(r rune) bool {
-	// ASCII alphanumerics and underscore are not separators
+	// ASCII 字母数字和下划线不是分隔符
 	if r <= 0x7F {
 		switch {
 		case '0' <= r && r <= '9':
@@ -735,22 +715,21 @@ func isSeparator(r rune) bool {
 		}
 		return true
 	}
-	// Letters and digits are not separators
+	// 字母和数字不是分隔符
 	if unicode.IsLetter(r) || unicode.IsDigit(r) {
 		return false
 	}
-	// Otherwise, all we can do for now is treat spaces as separators.
+	// 否则，我们只能将空格视为分隔符。
 	return unicode.IsSpace(r)
 }
 
-// Title treats s as UTF-8-encoded bytes and returns a copy with all Unicode letters that begin
-// words mapped to their title case.
+// Title 将 s 视为 UTF-8 编码的字节，并返回一个副本，其中包含所有以单词开头的 Unicode 字母，这些字母映射到它们的标题大小写。
 //
-// BUG(rsc): The rule Title uses for word boundaries does not handle Unicode punctuation properly.
+// BUG(rsc):标题用于单词边界的规则不能正确处理 Unicode 标点。
 func Title(s []byte) []byte {
-	// Use a closure here to remember state.
-	// Hackish but effective. Depends on Map scanning in order and calling
-	// the closure once per rune.
+	// 在此处使用闭包来记住状态。
+	// 麻烦但有效。Depends on Map scanning in order and calling
+	// the closure once per rune.依赖于 Map 扫描的顺序和每个 rune 调用闭包。
 	prev := ' '
 	return Map(
 		func(r rune) rune {
@@ -764,8 +743,7 @@ func Title(s []byte) []byte {
 		s)
 }
 
-// TrimLeftFunc treats s as UTF-8-encoded bytes and returns a subslice of s by slicing off
-// all leading UTF-8-encoded code points c that satisfy f(c).
+// TrimLeftFunc 将 s 视为 UTF-8 编码的字节，并通过将前面满足 f(c) 的 UTF-8 编码的代码点 c 分割出来，返回 s 的子切片。
 func TrimLeftFunc(s []byte, f func(r rune) bool) []byte {
 	i := indexFunc(s, f, false)
 	if i == -1 {
@@ -774,8 +752,7 @@ func TrimLeftFunc(s []byte, f func(r rune) bool) []byte {
 	return s[i:]
 }
 
-// TrimRightFunc returns a subslice of s by slicing off all trailing
-// UTF-8-encoded code points c that satisfy f(c).
+// TrimRightFunc 通过将后面满足 f(c) 的 UTF-8 编码的代码点 c 分割出来，返回 s 的子切片。
 func TrimRightFunc(s []byte, f func(r rune) bool) []byte {
 	i := lastIndexFunc(s, f, false)
 	if i >= 0 && s[i] >= utf8.RuneSelf {
@@ -787,14 +764,13 @@ func TrimRightFunc(s []byte, f func(r rune) bool) []byte {
 	return s[0:i]
 }
 
-// TrimFunc returns a subslice of s by slicing off all leading and trailing
-// UTF-8-encoded code points c that satisfy f(c).
+// TrimFunc 通过将所有满足 f(c) 的前、后 UTF-8 编码的代码点 c 分割出来，返回 s 的子切片。
 func TrimFunc(s []byte, f func(r rune) bool) []byte {
 	return TrimRightFunc(TrimLeftFunc(s, f), f)
 }
 
-// TrimPrefix returns s without the provided leading prefix string.
-// If s doesn't start with prefix, s is returned unchanged.
+// TrimPrefix 返回不包含给定前缀字符串的 s。
+// 如果 s 不以前缀开头，则 s 不变。
 func TrimPrefix(s, prefix []byte) []byte {
 	if HasPrefix(s, prefix) {
 		return s[len(prefix):]
@@ -802,8 +778,8 @@ func TrimPrefix(s, prefix []byte) []byte {
 	return s
 }
 
-// TrimSuffix returns s without the provided trailing suffix string.
-// If s doesn't end with suffix, s is returned unchanged.
+// TrimSuffix 返回不包含给定后缀字符串的 s。
+// 如果 s 不以后缀结尾，则 s 不变。
 func TrimSuffix(s, suffix []byte) []byte {
 	if HasSuffix(s, suffix) {
 		return s[:len(s)-len(suffix)]
@@ -811,23 +787,20 @@ func TrimSuffix(s, suffix []byte) []byte {
 	return s
 }
 
-// IndexFunc interprets s as a sequence of UTF-8-encoded code points.
-// It returns the byte index in s of the first Unicode
-// code point satisfying f(c), or -1 if none do.
+// IndexFunc 将 s 解释为 UTF-8 编码的代码点序列。
+// 它返回 s 中满足 f(c) 的第一个 Unicode 代码点的的字节索引，如果没有，则返回 -1。
 func IndexFunc(s []byte, f func(r rune) bool) int {
 	return indexFunc(s, f, true)
 }
 
-// LastIndexFunc interprets s as a sequence of UTF-8-encoded code points.
-// It returns the byte index in s of the last Unicode
-// code point satisfying f(c), or -1 if none do.
+// LastIndexFunc 将 s 解释为一系列 UTF-8 编码的代码点。
+// 它返回 s 中满足 f(c) 的最后一个 Unicode 代码点的的字节索引，如果没有，则返回 -1。
 func LastIndexFunc(s []byte, f func(r rune) bool) int {
 	return lastIndexFunc(s, f, true)
 }
 
-// indexFunc is the same as IndexFunc except that if
-// truth==false, the sense of the predicate function is
-// inverted.
+// indexFunc 和 IndexFunc 是一样的，除了 truth == false，
+// 谓语函数的意义颠倒了。
 func indexFunc(s []byte, f func(r rune) bool, truth bool) int {
 	start := 0
 	for start < len(s) {
@@ -844,9 +817,8 @@ func indexFunc(s []byte, f func(r rune) bool, truth bool) int {
 	return -1
 }
 
-// lastIndexFunc is the same as LastIndexFunc except that if
-// truth==false, the sense of the predicate function is
-// inverted.
+// lastIndexFunc 和 LastIndexFunc 是一样的，除了 truth == false，
+// 谓语函数的意义颠倒了。
 func lastIndexFunc(s []byte, f func(r rune) bool, truth bool) int {
 	for i := len(s); i > 0; {
 		r, size := rune(s[i-1]), 1
@@ -861,16 +833,13 @@ func lastIndexFunc(s []byte, f func(r rune) bool, truth bool) int {
 	return -1
 }
 
-// asciiSet is a 32-byte value, where each bit represents the presence of a
-// given ASCII character in the set. The 128-bits of the lower 16 bytes,
-// starting with the least-significant bit of the lowest word to the
-// most-significant bit of the highest word, map to the full range of all
-// 128 ASCII characters. The 128-bits of the upper 16 bytes will be zeroed,
-// ensuring that any non-ASCII character will be reported as not in the set.
+// asciiSet 是一个 32 字节的值，其中每个位代表一个给定集合中的 ASCII 字符。
+// 低位 16 字节的 128 位，从最低单词的最低有效位开始到最高单词的最高有效位，
+// 映射到所有 128 个 ASCII 字符的全范围。高位 16 字节的 128 位将被归零，
+// 以确保任何非 ASCII 字符将被判断为不在集合中。
 type asciiSet [8]uint32
 
-// makeASCIISet creates a set of ASCII characters and reports whether all
-// characters in chars are ASCII.
+// makeASCIISet 创建一个 ASCII 字符的集合，并判断所有的字符中的字符是否是 ASCII。
 func makeASCIISet(chars string) (as asciiSet, ok bool) {
 	for i := 0; i < len(chars); i++ {
 		c := chars[i]
@@ -882,7 +851,7 @@ func makeASCIISet(chars string) (as asciiSet, ok bool) {
 	return as, true
 }
 
-// contains reports whether c is inside the set.
+// contains 判断 c 是否在集合里。
 func (as *asciiSet) contains(c byte) bool {
 	return (as[c>>5] & (1 << uint(c&31))) != 0
 }
@@ -908,34 +877,30 @@ func makeCutsetFunc(cutset string) func(r rune) bool {
 	}
 }
 
-// Trim returns a subslice of s by slicing off all leading and
-// trailing UTF-8-encoded code points contained in cutset.
+// Trim 通过分割所有前导和末尾的 UTF-8 编码的代码点来返回 s 的子切片。
 func Trim(s []byte, cutset string) []byte {
 	return TrimFunc(s, makeCutsetFunc(cutset))
 }
 
-// TrimLeft returns a subslice of s by slicing off all leading
-// UTF-8-encoded code points contained in cutset.
+// TrimLeft 通过分割所有前导的 UTF-8 编码的代码点来返回 s 的子切片。
 func TrimLeft(s []byte, cutset string) []byte {
 	return TrimLeftFunc(s, makeCutsetFunc(cutset))
 }
 
-// TrimRight returns a subslice of s by slicing off all trailing
-// UTF-8-encoded code points that are contained in cutset.
+// TrimRight 通过分割所有末尾的 UTF-8 编码的代码点来返回 s 的子切片。
 func TrimRight(s []byte, cutset string) []byte {
 	return TrimRightFunc(s, makeCutsetFunc(cutset))
 }
 
-// TrimSpace returns a subslice of s by slicing off all leading and
-// trailing white space, as defined by Unicode.
+// 根据 Unicode 的定义，TrimSpace 通过将所有前导和末尾的空格分割，返回 s 的一个子切片。
 func TrimSpace(s []byte) []byte {
-	// Fast path for ASCII: look for the first ASCII non-space byte
+	// ASCII 的快速路径：查找第一个 ASCII 非空格字节
 	start := 0
 	for ; start < len(s); start++ {
 		c := s[start]
 		if c >= utf8.RuneSelf {
-			// If we run into a non-ASCII byte, fall back to the
-			// slower unicode-aware method on the remaining bytes
+			// 如果遇到一个非 ASCII 字节, 在剩余的字节上回退到
+			// 较慢的 unicode 感知方法
 			return TrimFunc(s[start:], unicode.IsSpace)
 		}
 		if asciiSpace[c] == 0 {
@@ -943,7 +908,7 @@ func TrimSpace(s []byte) []byte {
 		}
 	}
 
-	// Now look for the first ASCII non-space byte from the end
+	// 现在从末尾查找第一个 ASCII 非空格字节
 	stop := len(s)
 	for ; stop > start; stop-- {
 		c := s[stop-1]
@@ -955,19 +920,18 @@ func TrimSpace(s []byte) []byte {
 		}
 	}
 
-	// At this point s[start:stop] starts and ends with an ASCII
-	// non-space bytes, so we're done. Non-ASCII cases have already
-	// been handled above.
+	// 此时 s[start:stop] 以 ASCII 非空格字节开始和结束，
+	// 到此完成。非 ASCII 情况在上面已经处理过了。
 	if start == stop {
-		// Special case to preserve previous TrimLeftFunc behavior,
-		// returning nil instead of empty slice if all spaces.
+		// 保留以前的 TrimLeftFunc 行为的特殊情况，
+		// 如果都是空格则返回 nil 而不是空切片。
 		return nil
 	}
 	return s[start:stop]
 }
 
-// Runes interprets s as a sequence of UTF-8-encoded code points.
-// It returns a slice of runes (Unicode code points) equivalent to s.
+// Runes 将 s 解释为 UTF-8 编码的代码点序列。
+// 它返回等于 s 的一部分 rune（Unicode 代码点）的切片。
 func Runes(s []byte) []rune {
 	t := make([]rune, utf8.RuneCount(s))
 	i := 0
@@ -980,27 +944,24 @@ func Runes(s []byte) []rune {
 	return t
 }
 
-// Replace returns a copy of the slice s with the first n
-// non-overlapping instances of old replaced by new.
-// If old is empty, it matches at the beginning of the slice
-// and after each UTF-8 sequence, yielding up to k+1 replacements
-// for a k-rune slice.
-// If n < 0, there is no limit on the number of replacements.
+// Replace 返回切片 s 的一个副本，其中前 n 个旧的非重叠实例被新的替换。
+// 如果旧的为空，则在切片的开头和每个 UTF-8 序列之后匹配，一个 k-rune 切片最多产生 k+1 个替换。
+// 如果 n < 0，则替换次数没有限制。
 func Replace(s, old, new []byte, n int) []byte {
 	m := 0
 	if n != 0 {
-		// Compute number of replacements.
+		// 计算替换次数。
 		m = Count(s, old)
 	}
 	if m == 0 {
-		// Just return a copy.
+		// 只返回一个副本。
 		return append([]byte(nil), s...)
 	}
 	if n < 0 || m < n {
 		n = m
 	}
 
-	// Apply replacements to buffer.
+	// 将替换应用于缓冲区。
 	t := make([]byte, len(s)+n*(len(new)-len(old)))
 	w := 0
 	start := 0
@@ -1022,21 +983,17 @@ func Replace(s, old, new []byte, n int) []byte {
 	return t[0:w]
 }
 
-// ReplaceAll returns a copy of the slice s with all
-// non-overlapping instances of old replaced by new.
-// If old is empty, it matches at the beginning of the slice
-// and after each UTF-8 sequence, yielding up to k+1 replacements
-// for a k-rune slice.
+// ReplaceAll 返回切片 s 的一个副本，其中所有旧的非重叠实例都被新的替换。
+// 如果旧的为空， 则在切片的开头和每个 UTF-8 序列之后匹配，一个 k-rune 切片最多产生 k+1 个替换。
 func ReplaceAll(s, old, new []byte) []byte {
 	return Replace(s, old, new, -1)
 }
 
-// EqualFold reports whether s and t, interpreted as UTF-8 strings,
-// are equal under Unicode case-folding, which is a more general
-// form of case-insensitivity.
+// EqualFold 判断 s 和 t 是否被解释为 UTF-8 字符串,
+// 在 Unicode 大小写折叠下是相等的，不区分大小写的情况下，这是通用的。
 func EqualFold(s, t []byte) bool {
 	for len(s) != 0 && len(t) != 0 {
-		// Extract first rune from each.
+		// 从每个字符串中提取第一个 rune。
 		var sr, tr rune
 		if s[0] < utf8.RuneSelf {
 			sr, s = rune(s[0]), s[1:]
@@ -1051,28 +1008,28 @@ func EqualFold(s, t []byte) bool {
 			tr, t = r, t[size:]
 		}
 
-		// If they match, keep going; if not, return false.
+		// 如果匹配就继续；反之，则返回false。
 
-		// Easy case.
+		// 简单的情况。
 		if tr == sr {
 			continue
 		}
 
-		// Make sr < tr to simplify what follows.
+		// 使 sr < tr 简化为如下内容。
 		if tr < sr {
 			tr, sr = sr, tr
 		}
-		// Fast check for ASCII.
+		// 快速检查 ASCII。
 		if tr < utf8.RuneSelf {
-			// ASCII only, sr/tr must be upper/lower case
+			// 仅 ASCII，sr/tr 必须为大/小写
 			if 'A' <= sr && sr <= 'Z' && tr == sr+'a'-'A' {
 				continue
 			}
 			return false
 		}
 
-		// General case. SimpleFold(x) returns the next equivalent rune > x
-		// or wraps around to smaller values.
+		// 通常情况。SimpleFold(x) 返回大于 x 的 下一个等效 rune，
+		// 或换成较小的值。
 		r := unicode.SimpleFold(sr)
 		for r != sr && r < tr {
 			r = unicode.SimpleFold(r)
@@ -1087,7 +1044,7 @@ func EqualFold(s, t []byte) bool {
 	return len(s) == len(t)
 }
 
-// Index returns the index of the first instance of sep in s, or -1 if sep is not present in s.
+// Index 返回 s 中 sep 第一个实例的索引，如果 s 中不存在 sep，则返回 -1。
 func Index(s, sep []byte) int {
 	n := len(sep)
 	switch {
@@ -1103,7 +1060,7 @@ func Index(s, sep []byte) int {
 	case n > len(s):
 		return -1
 	case n <= bytealg.MaxLen:
-		// Use brute force when s and sep both are small
+		// 当 s 和 sep 都较小时使用蛮力
 		if len(s) <= bytealg.MaxBruteForce {
 			return bytealg.Index(s, sep)
 		}
@@ -1114,8 +1071,8 @@ func Index(s, sep []byte) int {
 		fails := 0
 		for i < t {
 			if s[i] != c0 {
-				// IndexByte is faster than bytealg.Index, so use it as long as
-				// we're not getting lots of false positives.
+				// IndexByte 比 bytealg.Index 快,
+				// 因此只要我们没有得到很多报错，就可以使用它。
 				o := IndexByte(s[i+1:t], c0)
 				if o < 0 {
 					return -1
@@ -1127,7 +1084,7 @@ func Index(s, sep []byte) int {
 			}
 			fails++
 			i++
-			// Switch to bytealg.Index when IndexByte produces too many false positives.
+			// 当 IndexByte 产生太多的报错时，使用 bytealg.Index。
 			if fails > bytealg.Cutover(i) {
 				r := bytealg.Index(s[i:], sep)
 				if r >= 0 {
@@ -1157,14 +1114,13 @@ func Index(s, sep []byte) int {
 		i++
 		fails++
 		if fails >= 4+i>>4 && i < t {
-			// Give up on IndexByte, it isn't skipping ahead
-			// far enough to be better than Rabin-Karp.
-			// Experiments (using IndexPeriodic) suggest
-			// the cutover is about 16 byte skips.
-			// TODO: if large prefixes of sep are matching
-			// we should cutover at even larger average skips,
-			// because Equal becomes that much more expensive.
-			// This code does not take that effect into account.
+			// 放弃 IndexByte, 它跳得不够远
+			// 比不上 Rabin-Karp.
+			// 实验（使用 IndexPeriodic）建议切换大约跳过 16 个字节。
+			// TODO: 如果 sep 的大前缀匹配，
+			// 我们应该以更大的平均跳过来切换，
+			// 因为 Equal 变得更加昂贵。
+			// 此代码未考虑到这种影响。
 			j := bytealg.IndexRabinKarpBytes(s[i:], sep)
 			if j < 0 {
 				return -1
