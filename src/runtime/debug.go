@@ -9,11 +9,9 @@ import (
 	"unsafe"
 )
 
-// GOMAXPROCS sets the maximum number of CPUs that can be executing
-// simultaneously and returns the previous setting. If n < 1, it does not
-// change the current setting.
-// The number of logical CPUs on the local machine can be queried with NumCPU.
-// This call will go away when the scheduler improves.
+// GOMAXPROCS 设置可以同时执行的最大 CPU 数，并返回之前的设置。
+// 默认为 runtime.NumCPU 的值，如果 n<1，不改变当前设置。
+// 当调度程序改进时，这个调用将消失。
 func GOMAXPROCS(n int) int {
 	if GOARCH == "wasm" && n > 1 {
 		n = 1 // WebAssembly has no threads yet, so only one CPU is possible.
@@ -35,16 +33,15 @@ func GOMAXPROCS(n int) int {
 	return ret
 }
 
-// NumCPU returns the number of logical CPUs usable by the current process.
+// NumCPU 返回当前进程可用的逻辑处理器的数量。
 //
-// The set of available CPUs is checked by querying the operating system
-// at process startup. Changes to operating system CPU allocation after
-// process startup are not reflected.
+// 通过在进程启动时查询操作系统来检查可用 CPU 的集合。
+// 进程启动后对操作系统 CPU 分配的更改不会得到反映。
 func NumCPU() int {
 	return int(ncpu)
 }
 
-// NumCgoCall returns the number of cgo calls made by the current process.
+// NumCgoCall 返回当前进程发出的 cgo 调用数。
 func NumCgoCall() int64 {
 	var n int64
 	for mp := (*m)(atomic.Loadp(unsafe.Pointer(&allm))); mp != nil; mp = mp.alllink {
@@ -53,7 +50,7 @@ func NumCgoCall() int64 {
 	return n
 }
 
-// NumGoroutine returns the number of goroutines that currently exist.
+// NumGoroutine 返回当前存在的 Goroutine 数。
 func NumGoroutine() int {
 	return int(gcount())
 }

@@ -174,11 +174,9 @@ func traceBufPtrOf(b *traceBuf) traceBufPtr {
 	return traceBufPtr(unsafe.Pointer(b))
 }
 
-// StartTrace enables tracing for the current process.
-// While tracing, the data will be buffered and available via ReadTrace.
-// StartTrace returns an error if tracing is already enabled.
-// Most clients should use the runtime/trace package or the testing package's
-// -test.trace flag instead of calling StartTrace directly.
+// StartTrace 启用对当前进程的跟踪。跟踪时，数据将被缓冲，并可通过 ReadTrace 获得。
+// 如果跟踪已经启用，StartTrace 将返回一个 error。
+// 大多数客户端应该使用 runtime.trace 包或 testing 包的 -test.trace 标志，而不是直接调用 StartTrace。
 func StartTrace() error {
 	// Stop the world so that we can take a consistent snapshot
 	// of all goroutines at the beginning of the trace.
@@ -277,8 +275,8 @@ func StartTrace() error {
 	return nil
 }
 
-// StopTrace stops tracing, if it was previously enabled.
-// StopTrace only returns after all the reads for the trace have completed.
+// 如果先前已启用，StopTrace 将停止跟踪。
+// StopTrace 仅在跟踪的所有读取完成后返回。
 func StopTrace() {
 	// Stop the world so that we can collect the trace buffers from all p's below,
 	// and also to avoid races with traceEvent.
@@ -367,11 +365,10 @@ func StopTrace() {
 	unlock(&trace.lock)
 }
 
-// ReadTrace returns the next chunk of binary tracing data, blocking until data
-// is available. If tracing is turned off and all the data accumulated while it
-// was on has been returned, ReadTrace returns nil. The caller must copy the
-// returned data before calling ReadTrace again.
-// ReadTrace must be called from one goroutine at a time.
+// ReadTrace 返回二进制跟踪数据的下一个块，阻塞直到数据可用。
+// 如果跟踪被关闭，并且在跟踪期间积累的所有数据都已返回，则 ReadTrace 返回 nil。
+// 在再次调用 ReadTrace 之前，调用方必须复制返回的数据。
+// 一次只能从一个 goroutine 调用 ReadTrace。
 func ReadTrace() []byte {
 	// This function may need to lock trace.lock recursively
 	// (goparkunlock -> traceGoPark -> traceEvent -> traceFlush).

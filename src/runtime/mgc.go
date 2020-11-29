@@ -1058,9 +1058,7 @@ var work struct {
 	heap0, heap1, heap2, heapGoal uint64
 }
 
-// GC runs a garbage collection and blocks the caller until the
-// garbage collection is complete. It may also block the entire
-// program.
+// GC 运行垃圾收集并阻塞调用者，直到垃圾收集完成。它也可能会阻塞整个程序。
 func GC() {
 	// We consider a cycle to be: sweep termination, mark, mark
 	// termination, and sweep. This function shouldn't return

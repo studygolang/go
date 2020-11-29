@@ -6,7 +6,7 @@ package runtime
 
 import "internal/bytealg"
 
-// The Error interface identifies a run time error.
+// Error 接口识别运行时错误。
 type Error interface {
 	error
 
@@ -17,7 +17,7 @@ type Error interface {
 	RuntimeError()
 }
 
-// A TypeAssertionError explains a failed type assertion.
+// TypeAssertionError 解释了一个失败的类型断言
 type TypeAssertionError struct {
 	_interface    *_type
 	concrete      *_type

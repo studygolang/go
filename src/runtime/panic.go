@@ -572,14 +572,12 @@ func deferreturn(arg0 uintptr) {
 	jmpdefer(fn, uintptr(unsafe.Pointer(&arg0)))
 }
 
-// Goexit terminates the goroutine that calls it. No other goroutine is affected.
-// Goexit runs all deferred calls before terminating the goroutine. Because Goexit
-// is not a panic, any recover calls in those deferred functions will return nil.
+// Goexit 终止调用它的 goroutine。没有其他 goroutine 受到影响。
+// Goexit 在终止 goroutine 之前运行所有 deferred 调用。
+// 因为 Goexit 不是一个 panic，所以那些 deferred 函数中的任何 recover 调用都将返回 nil。
 //
-// Calling Goexit from the main goroutine terminates that goroutine
-// without func main returning. Since func main has not returned,
-// the program continues execution of other goroutines.
-// If all other goroutines exit, the program crashes.
+// 从主 goroutine 调用 Goexit 会终止该 goroutine，而不会返回 func main。
+// 由于 func main 没有返回，程序继续执行其他 goroutines。如果所有其他 goroutines 退出，程序将崩溃。
 func Goexit() {
 	// Run all deferred functions for the current goroutine.
 	// This code is similar to gopanic, see that implementation

@@ -3,186 +3,152 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package runtime contains operations that interact with Go's runtime system,
-such as functions to control goroutines. It also includes the low-level type information
-used by the reflect package; see reflect's documentation for the programmable
-interface to the run-time type system.
+runtime 包含与 Go 的运行时系统交互的操作，例如控制 goroutines 的函数。
+它还包括 reflect 包使用的低级类型信息；
+有关 run-time 类型系统的可编程接口，请参见 reflect 的文档。
 
 Environment Variables
 
-The following environment variables ($name or %name%, depending on the host
-operating system) control the run-time behavior of Go programs. The meanings
-and use may change from release to release.
+下列环境变量( $name 或 %name%，取决于主机操作系统)控制 Go 程序的运行时行为。
+不同版本的含义和用途可能会有所不同。
 
-The GOGC variable sets the initial garbage collection target percentage.
-A collection is triggered when the ratio of freshly allocated data to live data
-remaining after the previous collection reaches this percentage. The default
-is GOGC=100. Setting GOGC=off disables the garbage collector entirely.
-The runtime/debug package's SetGCPercent function allows changing this
-percentage at run time. See https://golang.org/pkg/runtime/debug/#SetGCPercent.
+GOGC 变量设置初始垃圾收集目标百分比。当新分配的数据与上次收集后剩余的实时数据的比率达到此百分比时，将触发收集。
+默认情况下 GOGC=100。设置 GOGC=off 会完全禁用垃圾收集器(garbage collector)。
+runtime/debug 包的 SetGCPercent 函数允许在运行时改变这个百分比的值。
+请参见 https://golang.org/pkg/runtime/debug/#SetGCPercent。
 
-The GODEBUG variable controls debugging variables within the runtime.
-It is a comma-separated list of name=val pairs setting these named variables:
+GODEBUG 变量控制运行时中的调试变量(debugging variables)。
+它是一个逗号分隔的成对出现的 name=val 组成列表，用于设置这些指定的变量:
 
-	allocfreetrace: setting allocfreetrace=1 causes every allocation to be
-	profiled and a stack trace printed on each object's allocation and free.
+	allocfreetrace: 设置 allocfreetrace=1 会导致每个分配都被分析，并在每个对象的分配上打印一个堆栈跟踪。
 
-	clobberfree: setting clobberfree=1 causes the garbage collector to
-	clobber the memory content of an object with bad content when it frees
-	the object.
+	clobberfree: 设置 clobberfree=1 会导致垃圾收集器(garbage collector)在释放对象时，
+	用错误的内容(bad content)来清理对象的内存内容(memory content)。
 
-	cgocheck: setting cgocheck=0 disables all checks for packages
-	using cgo to incorrectly pass Go pointers to non-Go code.
-	Setting cgocheck=1 (the default) enables relatively cheap
-	checks that may miss some errors.  Setting cgocheck=2 enables
-	expensive checks that should not miss any errors, but will
-	cause your program to run slower.
+	cgocheck: 设置 cgocheck=0 将禁用对使用 cgo 错误地将 go 指针传递给非 Go 代码的包的所有检查。
+	设置 cgocheck=1(默认值) 可以进行相对便宜的检查，可能会遗漏一些错误。
+	设置 cgocheck=2 可以进行昂贵的检查，不会遗漏任何错误，但会导致程序运行速度变慢。
 
-	efence: setting efence=1 causes the allocator to run in a mode
-	where each object is allocated on a unique page and addresses are
-	never recycled.
+	efence: 设置 efence=1 会导致分配器(allocator)以一种模式运行，
+	在这种模式下，每个对象都被分配到一个唯一的页(page)上，并且地址永远不会被回收。
 
-	gccheckmark: setting gccheckmark=1 enables verification of the
-	garbage collector's concurrent mark phase by performing a
-	second mark pass while the world is stopped.  If the second
-	pass finds a reachable object that was not found by concurrent
-	mark, the garbage collector will panic.
+	gccheckmark: 设置 gccheckmark=1 可以在发生 STW(Stop-the-World, 指的是GC事件发生过程中，
+	会产生应用程序的停顿。这个停顿称为STW) 时通过执行第二次标记传递来验证垃圾收集器的并发标记阶段。
+	如果第二遍找到一个并发标记未找到的可到达对象，垃圾收集器将会 panic。
 
-	gcpacertrace: setting gcpacertrace=1 causes the garbage collector to
-	print information about the internal state of the concurrent pacer.
+	gcpacertrace: 设置 gcpacertrace=1 会导致垃圾收集器打印有关 concurrent pacer 内部状态的信息。
 
-	gcshrinkstackoff: setting gcshrinkstackoff=1 disables moving goroutines
-	onto smaller stacks. In this mode, a goroutine's stack can only grow.
+	gcshrinkstackoff: 设置 gcshrinkstackoff=1 将禁止将 goroutines 移动到较小的堆栈上。
+	在这种模式下，goroutine 的堆栈只能增长。
 
-	gcstoptheworld: setting gcstoptheworld=1 disables concurrent garbage collection,
-	making every garbage collection a stop-the-world event. Setting gcstoptheworld=2
-	also disables concurrent sweeping after the garbage collection finishes.
+	gcstopthewrold: 设置 gcstoptheworld=1 将禁用并发垃圾收集，使每个垃圾收集都成为一个 SWT 事件。
+	设置 gcstoptheworld=2 还会在垃圾收集完成后禁用并发清理。
 
-	gctrace: setting gctrace=1 causes the garbage collector to emit a single line to standard
-	error at each collection, summarizing the amount of memory collected and the
-	length of the pause. The format of this line is subject to change.
-	Currently, it is:
+	gctrace: 设置 gctrace=1 会导致垃圾收集器在每次收集时发出单行的标准错误，
+	汇总收集的内存量和暂停时间。此行的格式可能会有所更改。
+	目前，它是这样的：
 		gc # @#s #%: #+#+# ms clock, #+#/#/#+# ms cpu, #->#-># MB, # MB goal, # P
-	where the fields are as follows:
-		gc #        the GC number, incremented at each GC
-		@#s         time in seconds since program start
-		#%          percentage of time spent in GC since program start
-		#+...+#     wall-clock/CPU times for the phases of the GC
-		#->#-># MB  heap size at GC start, at GC end, and live heap
-		# MB goal   goal heap size
-		# P         number of processors used
-	The phases are stop-the-world (STW) sweep termination, concurrent
-	mark and scan, and STW mark termination. The CPU times
-	for mark/scan are broken down in to assist time (GC performed in
-	line with allocation), background GC time, and idle GC time.
-	If the line ends with "(forced)", this GC was forced by a
-	runtime.GC() call.
+	其中字段如下：
+		gc #        GC 编号, 每次垃圾收集时递增
+		@#s         程序启动后的时间(秒)
+		#%          自程序启动后花费在垃圾收集上的时间百分比
+		#+...+#     在垃圾收集阶段 wall-clock/CPU 时间
+		#->#-># MB  垃圾回收开始时、垃圾回收结束时和实时堆的堆大小
+		# MB goal   目标堆大小
+		# P         使用的处理器数量
+	这些阶段是 stop-the-world(STW) 扫描终止、并发标记和扫描以及STW标记终止。
+	标记/扫描的中央处理器时间分为辅助时间(根据分配执行的垃圾收集)、后台垃圾收集时间和空闲垃圾收集时间。
+	如果该行以“(forced)”结尾，则该垃圾收集是由 runtime.GC() 强制调用的。
 
-	madvdontneed: setting madvdontneed=1 will use MADV_DONTNEED
-	instead of MADV_FREE on Linux when returning memory to the
-	kernel. This is less efficient, but causes RSS numbers to drop
-	more quickly.
+	inittrace: 设置 inittrace=1 会导致运行时为每个具有 init work 的包发出单行的标准错误，
+	汇总执行时间和内存分配。对于作为插件加载的一部分执行的 init 和没有用户定义和编译器生成的 
+	init 工作的包，不打印任何信息。
+	此行的格式可能会有所更改。目前，它是这样的:
+		init # @#ms, # ms clock, # bytes, # allocs
+	其中字段如下:
+		init #      包的名称
+		@# ms       从程序启动后到 init 启动的时间(毫秒)
+		# clock     包初始化工作的 wall-clock 时间
+		# bytes     堆上分配的内存
+		# allocs    堆分配的数量
 
-	memprofilerate: setting memprofilerate=X will update the value of runtime.MemProfileRate.
-	When set to 0 memory profiling is disabled.  Refer to the description of
-	MemProfileRate for the default value.
+	madvdontneed: 设置 madvdontneed=0 将在Linux上使用 MADV_FREE 而不是 
+	MADV_DONTNEED 来为内核返回内存。这样效率更高，但是意味着 RSS 数量只有在
+	OS 内存压力大的时候才会下降。
 
-	invalidptr: invalidptr=1 (the default) causes the garbage collector and stack
-	copier to crash the program if an invalid pointer value (for example, 1)
-	is found in a pointer-typed location. Setting invalidptr=0 disables this check.
-	This should only be used as a temporary workaround to diagnose buggy code.
-	The real fix is to not store integers in pointer-typed locations.
+	memprofilerate: 设置 memprofilerate=X 将更新 runtime.MemprofileRate 的值。
+	设置为0时，禁用内存分析。有关默认值，请参考 MemProfileRate 的描述。
 
-	sbrk: setting sbrk=1 replaces the memory allocator and garbage collector
-	with a trivial allocator that obtains memory from the operating system and
-	never reclaims any memory.
+	invalidptr: 如果在 pointer-typed 的位置发现无效的指针值(例如 invalidptr=1(默认值)
+	会导致垃圾收集器和堆栈复制器崩溃。设置 invalidptr=0 将禁用此检查。
+	这只能作为诊断有问题代码的临时解决方法。
+	真正的解决办法是不在 pointer-typed 的位置存储整数。
 
-	scavenge: scavenge=1 enables debugging mode of heap scavenger.
+	sbrk: 设置 sbrk=1 将内存分配器和垃圾收集器替换为简单的分配器，
+	它从操作系统获取内存，并且从不回收任何内存。
 
-	scavtrace: setting scavtrace=1 causes the runtime to emit a single line to standard
-	error, roughly once per GC cycle, summarizing the amount of work done by the
-	scavenger as well as the total amount of memory returned to the operating system
-	and an estimate of physical memory utilization. The format of this line is subject
-	to change, but currently it is:
+	scavenge: scavenge=1 启用堆清除程序的调试模式。
+
+	scavtrace: 设置scavtrace=1会导致运行时发出一个单行的标准错误，大约每个 GC 周期一次，
+	汇总清除程序完成的工作量以及返回给操作系统的内存总量和对物理内存利用率的估计。
+	该行的格式可能会更改，但目前是:
 		scav # # KiB work, # KiB total, #% util
-	where the fields are as follows:
-		scav #       the scavenge cycle number
-		# KiB work   the amount of memory returned to the OS since the last line
-		# KiB total  the total amount of memory returned to the OS
-		#% util      the fraction of all unscavenged memory which is in-use
-	If the line ends with "(forced)", then scavenging was forced by a
-	debug.FreeOSMemory() call.
+	其中字段如下:
+		scav #       清除循环编号
+		# KiB work   自最后一行以来返回给操作系统的内存量
+		# KiB total  返回给操作系统的内存总量
+		#% util      正在使用的所有未清理内存的一部分。如果该行以“(forced)”结尾，
+		则 scavenging 会通过调用 debug.FreeOSMemory() 强制清理。
 
-	scheddetail: setting schedtrace=X and scheddetail=1 causes the scheduler to emit
-	detailed multiline info every X milliseconds, describing state of the scheduler,
-	processors, threads and goroutines.
+	scheddetail: 设置 schedtrace=X 和 scheddetail=1 会导致调度程序每X毫秒发出详细的多行信息，
+	描述调度程序、处理器、线程和 goroutines 的状态。
 
-	schedtrace: setting schedtrace=X causes the scheduler to emit a single line to standard
-	error every X milliseconds, summarizing the scheduler state.
+	schedtrace: 设置 schedtrace=X 会导致调度程序每隔X毫秒发出一行标准错误，汇总调度程序的状态。
 
-	tracebackancestors: setting tracebackancestors=N extends tracebacks with the stacks at
-	which goroutines were created, where N limits the number of ancestor goroutines to
-	report. This also extends the information returned by runtime.Stack. Ancestor's goroutine
-	IDs will refer to the ID of the goroutine at the time of creation; it's possible for this
-	ID to be reused for another goroutine. Setting N to 0 will report no ancestry information.
+	tracebackancestors: 设置 tracebackancestors=N 会使用创建 goroutines 的堆栈扩展回溯
+	其中 N 限制了要报告的祖先 goroutines 的数量。这也扩展了 runtime.Stack 返回的信息。
+	祖先的 goroutine IDs 指的是 gorotine 在创建时的 ID；该 ID 有可能被重新用于其他 goroutine。
+	将N设置为0将不会报告祖先信息。
 
-	asyncpreemptoff: asyncpreemptoff=1 disables signal-based
-	asynchronous goroutine preemption. This makes some loops
-	non-preemptible for long periods, which may delay GC and
-	goroutine scheduling. This is useful for debugging GC issues
-	because it also disables the conservative stack scanning used
-	for asynchronously preempted goroutines.
+	asyncpreemptoff: asyncpreemptoff=1 禁用基于信号的异步 goroutine 抢占。
+	这使得一些循环长时间不可抢占，这可能会延迟 GC 和 goroutine 调度。
+	这对于调试 GC 问题很有用，因为它还禁用了用于异步抢占的 goroutines 的保守堆栈扫描。
 
-The net, net/http, and crypto/tls packages also refer to debugging variables in GODEBUG.
-See the documentation for those packages for details.
+net、net/http、crypto/tls 这些包也涉及 GODEBUG 中的调试变量(debugging variables)。
+详细内容请参见这些包的文档。
 
-The GOMAXPROCS variable limits the number of operating system threads that
-can execute user-level Go code simultaneously. There is no limit to the number of threads
-that can be blocked in system calls on behalf of Go code; those do not count against
-the GOMAXPROCS limit. This package's GOMAXPROCS function queries and changes
-the limit.
+GOMAXPROCS 变量限制了可以同时执行用户级 Go 代码的操作系统线程的数量。
+对于以 Go 代码为代表所产生的系统调用，可被阻塞的线程数没有限制；这些不计入 GOMAXPROCS 限制。
+这个包的 GOMAXPROCS 函数可查询限制和修改限制。
 
-The GORACE variable configures the race detector, for programs built using -race.
-See https://golang.org/doc/articles/race_detector.html for details.
+GORACE 变量配置竞争检测器(race detector)，构建程序时使用 -race 参数。
+详细内容请参见 https://golang.org/doc/articles/race_detector.html。
 
-The GOTRACEBACK variable controls the amount of output generated when a Go
-program fails due to an unrecovered panic or an unexpected runtime condition.
-By default, a failure prints a stack trace for the current goroutine,
-eliding functions internal to the run-time system, and then exits with exit code 2.
-The failure prints stack traces for all goroutines if there is no current goroutine
-or the failure is internal to the run-time.
-GOTRACEBACK=none omits the goroutine stack traces entirely.
-GOTRACEBACK=single (the default) behaves as described above.
-GOTRACEBACK=all adds stack traces for all user-created goroutines.
-GOTRACEBACK=system is like ``all'' but adds stack frames for run-time functions
-and shows goroutines created internally by the run-time.
-GOTRACEBACK=crash is like ``system'' but crashes in an operating system-specific
-manner instead of exiting. For example, on Unix systems, the crash raises
-SIGABRT to trigger a core dump.
-For historical reasons, the GOTRACEBACK settings 0, 1, and 2 are synonyms for
-none, all, and system, respectively.
-The runtime/debug package's SetTraceback function allows increasing the
-amount of output at run time, but it cannot reduce the amount below that
-specified by the environment variable.
-See https://golang.org/pkg/runtime/debug/#SetTraceback.
+GOTRACEBACK 变量控制当 Go 程序由于未恢复的死机或意外的运行时条件而失败时生成的输出量。
+默认情况下，失败会打印当前 goroutine 的堆栈跟踪，省略运行时系统内部的函数，然后以 exit code 2 退出。
+如果没有当前的 goroutine 或失败是运行时内部的，则失败会打印所有 goroutine 的堆栈跟踪。
+GOTRACEBACK=none 完全省略 goroutine 堆栈跟踪。
+GOTRACEBACK=single （默认值）行为如上所述。
+GOTRACEBACK=all 为所有 user-created goroutines 添加堆栈跟踪。
+GOTRACEBACK=system 类似于 "all" 但为运行时函数添加了栈帧并显示运行时内部创建的 goroutines。
+GOTRACEBACK=crash 类似于 "system" 但是以特定于操作系统的方式崩溃，而不是退出。例如，在 Unix 系统上，崩溃引发 SIGABRT 来触发核心转储。
+出于历史原因，GOTRACEBACK设置 0、1、2 分别是 none、all 和 system 的同义词。
+runtime/debug 包的 SetTraceback 函数允许在运行时增加输出量，但它不能将输出量减少到环境变量指定的值以下。
+请参见 https://golang.org/pkg/runtime/debug/#SetTraceback。
 
-The GOARCH, GOOS, GOPATH, and GOROOT environment variables complete
-the set of Go environment variables. They influence the building of Go programs
-(see https://golang.org/cmd/go and https://golang.org/pkg/go/build).
-GOARCH, GOOS, and GOROOT are recorded at compile time and made available by
-constants or functions in this package, but they do not influence the execution
-of the run-time system.
+GOARCH、GOOS、GOPATH 和 GOROOT 环境变量完成了 Go 环境变量集。它们影响 Go 程序的建立
+(参见 https://golang.org/cmd/go 和 https://golang.org/pkg/go/build)。
+GOARCH、GOOS 和 GOROOT 是在编译时记录的，并通过这个包中的常量或函数提供，但是它们不影响运行时系统的执行。
 */
 package runtime
 
 import "runtime/internal/sys"
 
-// Caller reports file and line number information about function invocations on
-// the calling goroutine's stack. The argument skip is the number of stack frames
-// to ascend, with 0 identifying the caller of Caller.  (For historical reasons the
-// meaning of skip differs between Caller and Callers.) The return values report the
-// program counter, file name, and line number within the file of the corresponding
-// call. The boolean ok is false if it was not possible to recover the information.
+// Caller 在调用 goroutine 的堆栈上报告关于函数调用的文件和行号信息。
+// 参数 skip 是要递增的堆栈帧数，0 表示调用者的 Caller。
+// (由于历史原因，Caller 和 Callers 之间跳过的含义不同。)
+// 返回值报告相应调用的文件中的程序计数器、文件名和行号。
+// 如果无法 recover 信息，则布尔值 ok 为 false。
 func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 	rpc := make([]uintptr, 1)
 	n := callers(skip+1, rpc[:])
@@ -193,19 +159,14 @@ func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 	return frame.PC, frame.File, frame.Line, frame.PC != 0
 }
 
-// Callers fills the slice pc with the return program counters of function invocations
-// on the calling goroutine's stack. The argument skip is the number of stack frames
-// to skip before recording in pc, with 0 identifying the frame for Callers itself and
-// 1 identifying the caller of Callers.
-// It returns the number of entries written to pc.
-//
-// To translate these PCs into symbolic information such as function
-// names and line numbers, use CallersFrames. CallersFrames accounts
-// for inlined functions and adjusts the return program counters into
-// call program counters. Iterating over the returned slice of PCs
-// directly is discouraged, as is using FuncForPC on any of the
-// returned PCs, since these cannot account for inlining or return
-// program counter adjustment.
+// Callers 用调用 goroutine 栈上函数调用的返回程序计数器填充 slice pc。
+// skip 参数是在 pc 中记录之前要跳过的堆栈帧数，0 表示 Callers 本身的帧，
+// 1 表示 Callers 的调用者。它返回写入 pc 的条目数。
+// 
+// 要将这些 PCs 转换为符号信息，如函数名和行号，请使用CallersFrames。
+// CallersFrames 负责内联函数，并调整返回程序计数器到调用程序计数器。
+// 不鼓励直接对返回的 PCs 进行迭代，就像在任何返回的程序片上使用 FuncForPC 一样，
+// 因为这些不能解释内联或返回程序计数器调整。
 func Callers(skip int, pc []uintptr) int {
 	// runtime.callers uses pc.array==nil as a signal
 	// to print a stack trace. Pick off 0-length pc here
@@ -216,9 +177,8 @@ func Callers(skip int, pc []uintptr) int {
 	return callers(skip, pc)
 }
 
-// GOROOT returns the root of the Go tree. It uses the
-// GOROOT environment variable, if set at process start,
-// or else the root used during the Go build.
+// GOROOT 返回 Go 树的根。
+// 它使用 GOROOT 环境变量(如果在进程开始时设置的话)，或者在 Go build 过程中使用的根。
 func GOROOT() string {
 	s := gogetenv("GOROOT")
 	if s != "" {
@@ -227,18 +187,15 @@ func GOROOT() string {
 	return sys.DefaultGoroot
 }
 
-// Version returns the Go tree's version string.
-// It is either the commit hash and date at the time of the build or,
-// when possible, a release tag like "go1.3".
+// Version 返回 Go 树的版本字符串。
+// 它或者是构建时的提交 hash 和 date，或者，如果可能的话，是像 “go1.3” 这样的发布标签。
 func Version() string {
 	return sys.TheVersion
 }
 
-// GOOS is the running program's operating system target:
-// one of darwin, freebsd, linux, and so on.
-// To view possible combinations of GOOS and GOARCH, run "go tool dist list".
+// GOOS 是运行程序的操作系统目标: darwin、freebsd、linux 等当中的一个。
+// 要查看 GOOS 和 GOARCH 的可能组合，请运行“go tool dist list”。
 const GOOS string = sys.GOOS
 
-// GOARCH is the running program's architecture target:
-// one of 386, amd64, arm, s390x, and so on.
+// GOARCH 是运行程序的体系结构目标: 386、amd64、arm、s390x 等当中的一个。
 const GOARCH string = sys.GOARCH

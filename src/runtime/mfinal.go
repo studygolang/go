@@ -241,71 +241,51 @@ func runfinq() {
 	}
 }
 
-// SetFinalizer sets the finalizer associated with obj to the provided
-// finalizer function. When the garbage collector finds an unreachable block
-// with an associated finalizer, it clears the association and runs
-// finalizer(obj) in a separate goroutine. This makes obj reachable again,
-// but now without an associated finalizer. Assuming that SetFinalizer
-// is not called again, the next time the garbage collector sees
-// that obj is unreachable, it will free obj.
+// SetFinalizer 将与 obj 关联的 finalizer 设置为提供的 finalizer 函数。
+// 当垃圾收集器发现一个带有相关 finalizer 的不可达块时，它会清除关联，
+// 并在单独的 goroutine 中运行终结器(obj)。这使得 obj 再次可达，但现在没有关联的 finalizer。
+// 假设没有再次调用 SetFinalizer，那么下次垃圾收集器看到obj不可达时，就会释放obj。
 //
-// SetFinalizer(obj, nil) clears any finalizer associated with obj.
+// SetFinalizer(obj, nil) 清除任何 finalizer 关联的 obj。
 //
-// The argument obj must be a pointer to an object allocated by calling
-// new, by taking the address of a composite literal, or by taking the
-// address of a local variable.
-// The argument finalizer must be a function that takes a single argument
-// to which obj's type can be assigned, and can have arbitrary ignored return
-// values. If either of these is not true, SetFinalizer may abort the
-// program.
+// obj 参数必须是指向通过调用 new、获取复合文字的地址或获取局部变量的地址
+// 来分配的对象的指针。
+// finalizer 必须是一个接受单个参数的函数，可以将 obj 的类型赋给该参数，
+// 并且可以具有任意忽略的返回值。如果这两个条件都不成立，SetFinalizer 可能会中止程序。
 //
-// Finalizers are run in dependency order: if A points at B, both have
-// finalizers, and they are otherwise unreachable, only the finalizer
-// for A runs; once A is freed, the finalizer for B can run.
-// If a cyclic structure includes a block with a finalizer, that
-// cycle is not guaranteed to be garbage collected and the finalizer
-// is not guaranteed to run, because there is no ordering that
-// respects the dependencies.
+// Finalizers 按依赖顺序运行:如果 A 指向 B，两者都有 finalizers，
+// 否则无法到达，只有 A 的终结器运行；一旦 A 被释放，B 的终结器就可以运行了。
+// 如果循环结构包含带有 finalizer 的块，则循环不能保证被垃圾收集，
+// finalizer 也不能保证运行，因为没有考虑依赖关系的排序。
 //
-// The finalizer is scheduled to run at some arbitrary time after the
-// program can no longer reach the object to which obj points.
-// There is no guarantee that finalizers will run before a program exits,
-// so typically they are useful only for releasing non-memory resources
-// associated with an object during a long-running program.
-// For example, an os.File object could use a finalizer to close the
-// associated operating system file descriptor when a program discards
-// an os.File without calling Close, but it would be a mistake
-// to depend on a finalizer to flush an in-memory I/O buffer such as a
-// bufio.Writer, because the buffer would not be flushed at program exit.
+// finalizer 被安排在程序无法再到达 obj 指向的对象之后的任意时间运行。
+// 无法保证 finalizer 会在程序退出之前运行，
+// 因此通常它们仅用于在长时间运行程序期间释放与对象相关联的非内存资源。
+// 例如，当程序放弃 os.File 时，os.File 可以使用 finalizer 来关闭相关的
+// 操作系统文件描述符。但依赖 finalizer 来刷新内存中的 
+// I/O buffer (如bufio.Writer) 是错误的。因为在程序退出时不会刷新缓冲区。
 //
-// It is not guaranteed that a finalizer will run if the size of *obj is
-// zero bytes.
+// 如果 *obj 的大小为零字节，则不能保证 finalizer 会运行。
 //
-// It is not guaranteed that a finalizer will run for objects allocated
-// in initializers for package-level variables. Such objects may be
-// linker-allocated, not heap-allocated.
+// 不能保证 finalizer 会为包级变量的初始值设定项中分配的对象运行。
+// 这些对象可以是链接器分配的，而不是堆分配的。
 //
-// A finalizer may run as soon as an object becomes unreachable.
-// In order to use finalizers correctly, the program must ensure that
-// the object is reachable until it is no longer required.
-// Objects stored in global variables, or that can be found by tracing
-// pointers from a global variable, are reachable. For other objects,
-// pass the object to a call of the KeepAlive function to mark the
-// last point in the function where the object must be reachable.
+// 一旦对象变得不可访问，finalizer 就可以运行。
+// 为了正确使用 finalizer，程序必须确保对象在不再需要之前是可达的。
+// 存储在全局变量中的对象，或者可以通过跟踪全局变量中的指针找到的对象，都是可达的。
+// 对于其他对象，将对象传递给 KeepAlive 函数的调用，以标记函数中对象必须可到达的最后一点。
 //
-// For example, if p points to a struct that contains a file descriptor d,
-// and p has a finalizer that closes that file descriptor, and if the last
-// use of p in a function is a call to syscall.Write(p.d, buf, size), then
-// p may be unreachable as soon as the program enters syscall.Write. The
-// finalizer may run at that moment, closing p.d, causing syscall.Write
-// to fail because it is writing to a closed file descriptor (or, worse,
-// to an entirely different file descriptor opened by a different goroutine).
-// To avoid this problem, call runtime.KeepAlive(p) after the call to
-// syscall.Write.
+// 例如，如果 p 指向一个 struct，如 os.File，
+// 它包含一个文件描述符 d，p 有一个 finalizer 来关闭那个文件描述符，
+// 如果函数中最后一次使用 p 是调用 syscall.Write(p.d, buf, size)，
+// 那么程序一进入 syscall.Write 就可能无法到达 p。
+// finalizer 可能会在此时运行，关闭 p.d，导致 syscall.Write 失败，
+// 因为它正在向一个关闭了的文件描述符写入
+// (或者，更糟糕的是，由不同的 goroutine 打开的完全不同的文件描述符)。
+// 若要避免此问题，请在调用 syscall.Write 后调用 runtime.KeepAlive(p)。
 //
-// A single goroutine runs all finalizers for a program, sequentially.
-// If a finalizer must run for a long time, it should do so by starting
-// a new goroutine.
+// 单个 goroutine 按顺序运行一个程序的所有 finalizer。
+// 如果 finalizer 必须运行很长时间，它应该通过启动一个新的 goroutine 来完成。
 func SetFinalizer(obj interface{}, finalizer interface{}) {
 	if debug.sbrk != 0 {
 		// debug.sbrk never frees memory, so no finalizers run
@@ -424,11 +404,10 @@ okarg:
 // Mark KeepAlive as noinline so that it is easily detectable as an intrinsic.
 //go:noinline
 
-// KeepAlive marks its argument as currently reachable.
-// This ensures that the object is not freed, and its finalizer is not run,
-// before the point in the program where KeepAlive is called.
+// KeepAlive 将其参数标记为当前可达。
+// 这确保了在程序中调用 KeepAlive 的点之前，对象不会被释放，其 finalizer 也不会运行。
 //
-// A very simplified example showing where KeepAlive is required:
+// 一个非常简单的例子显示了哪里需要保持活动:
 // 	type File struct { d int }
 // 	d, err := syscall.Open("/file/path", syscall.O_RDONLY, 0)
 // 	// ... do something if err != nil ...
@@ -436,13 +415,12 @@ okarg:
 // 	runtime.SetFinalizer(p, func(p *File) { syscall.Close(p.d) })
 // 	var buf [10]byte
 // 	n, err := syscall.Read(p.d, buf[:])
-// 	// Ensure p is not finalized until Read returns.
+// 	// 确保在 Read 返回之前，p 尚未 finalized。
 // 	runtime.KeepAlive(p)
-// 	// No more uses of p after this point.
-//
-// Without the KeepAlive call, the finalizer could run at the start of
-// syscall.Read, closing the file descriptor before syscall.Read makes
-// the actual system call.
+// 	// 在这个点之后，p 不再使用。
+// 
+// 没有 KeepAlive 调用，finalizer 可以在 syscall.Read 开始时运行。
+// 在 syscall.Read 进行真正系统调用之前关闭文件描述符。
 func KeepAlive(x interface{}) {
 	// Introduce a use of x that the compiler can't eliminate.
 	// This makes sure x is alive on entry. We need x to be alive

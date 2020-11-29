@@ -1040,52 +1040,37 @@ func isSystemGoroutine(gp *g, fixed bool) bool {
 	return hasPrefix(funcname(f), "runtime.")
 }
 
-// SetCgoTraceback records three C functions to use to gather
-// traceback information from C code and to convert that traceback
-// information into symbolic information. These are used when printing
-// stack traces for a program that uses cgo.
+// SetCgoTraceback 记录了三个 C 函数，用于从C代码中收集回溯信息，
+// 并将回溯信息转换成符号信息。这些在打印使用cgo的程序的堆栈跟踪时使用。
 //
-// The traceback and context functions may be called from a signal
-// handler, and must therefore use only async-signal safe functions.
-// The symbolizer function may be called while the program is
-// crashing, and so must be cautious about using memory.  None of the
-// functions may call back into Go.
-//
-// The context function will be called with a single argument, a
-// pointer to a struct:
+// 追溯和上下文函数可以从信号处理程序中调用，因此必须只使用异步信号安全函数。
+// 程序崩溃时可能会调用符号器函数，因此必须小心使用内存。没有一个函数可以调用 Go。
+// 
+// 上下文函数将用一个参数调用，一个指向结构的指针:
 //
 //	struct {
 //		Context uintptr
 //	}
 //
-// In C syntax, this struct will be
+// 在 C 语法中, 这个结构体将是
 //
 //	struct {
 //		uintptr_t Context;
 //	};
 //
-// If the Context field is 0, the context function is being called to
-// record the current traceback context. It should record in the
-// Context field whatever information is needed about the current
-// point of execution to later produce a stack trace, probably the
-// stack pointer and PC. In this case the context function will be
-// called from C code.
+// 如果 Context 字段为0，则调用 context 函数来记录当前的回溯上下文。
+// 它应该在 Context 字段中记录关于当前执行点所需的任何信息，以便以后生成堆栈跟踪，
+// 可能是堆栈指针和 PC。在这种情况下，context 函数将从C代码中调用。
 //
-// If the Context field is not 0, then it is a value returned by a
-// previous call to the context function. This case is called when the
-// context is no longer needed; that is, when the Go code is returning
-// to its C code caller. This permits the context function to release
-// any associated resources.
+// 如果 Context 字段不是0，那么它是由先前对上下文函数的调用返回的值。
+// 当不再需要上下文时调用这种情况；也就是说，当 Go 代码返回到它的C代码调用者时。
+// 这允许 context 函数释放任何相关的资源。
 //
-// While it would be correct for the context function to record a
-// complete a stack trace whenever it is called, and simply copy that
-// out in the traceback function, in a typical program the context
-// function will be called many times without ever recording a
-// traceback for that context. Recording a complete stack trace in a
-// call to the context function is likely to be inefficient.
+// 虽然 context 函数在被调用时记录完整的堆栈跟踪是正确的，并且只需在回溯函数中复制出来，
+// 但在典型的程序中，context 函数将被调用多次，而不会记录该上下文的回溯。
+// 在对 context 函数的调用中记录完整的堆栈跟踪可能是低效的。
 //
-// The traceback function will be called with a single argument, a
-// pointer to a struct:
+// 回溯函数将用一个参数调用，一个指向结构的指针:
 //
 //	struct {
 //		Context    uintptr
@@ -1094,7 +1079,7 @@ func isSystemGoroutine(gp *g, fixed bool) bool {
 //		Max        uintptr
 //	}
 //
-// In C syntax, this struct will be
+// 在 C 语法中, 这个结构体将是
 //
 //	struct {
 //		uintptr_t  Context;
@@ -1103,61 +1088,48 @@ func isSystemGoroutine(gp *g, fixed bool) bool {
 //		uintptr_t  Max;
 //	};
 //
-// The Context field will be zero to gather a traceback from the
-// current program execution point. In this case, the traceback
-// function will be called from C code.
+// Context 字段将为零，以收集从当前程序执行点的追溯。
+// 在这种情况下，函数将从C代码中调用。
 //
-// Otherwise Context will be a value previously returned by a call to
-// the context function. The traceback function should gather a stack
-// trace from that saved point in the program execution. The traceback
-// function may be called from an execution thread other than the one
-// that recorded the context, but only when the context is known to be
-// valid and unchanging. The traceback function may also be called
-// deeper in the call stack on the same thread that recorded the
-// context. The traceback function may be called multiple times with
-// the same Context value; it will usually be appropriate to cache the
-// result, if possible, the first time this is called for a specific
-// context value.
+// 否则，Context 将是先前通过调用 context 函数返回的值。
+// 回溯函数应该从程序执行中保存的点收集堆栈跟踪。
+// 可以从记录上下文的执行线程之外的执行线程调用回溯函数，
+// 但是仅当已知上下文有效且不变时。
+// 回溯函数也可以在记录上下文的同一个线程的调用堆栈中更深的位置调用。
+// 回溯函数可以用相同的上下文值调用多次；
+// 如果可能的话，在第一次为特定的上下文值调用结果时，缓存结果通常是合适的。
 //
-// If the traceback function is called from a signal handler on a Unix
-// system, SigContext will be the signal context argument passed to
-// the signal handler (a C ucontext_t* cast to uintptr_t). This may be
-// used to start tracing at the point where the signal occurred. If
-// the traceback function is not called from a signal handler,
-// SigContext will be zero.
+// 如果从 Unix 系统上的信号处理程序调用回溯函数，
+// SigContext 将是传递给信号处理程序的信号上下文参数
+// (一个 C ucontext_t* 强制转换为 uintptr_t)。
+// 这可用于在信号出现的点开始跟踪。如果不是从信号处理程序调用追溯函数，
+// SigContext 将为零。
 //
-// Buf is where the traceback information should be stored. It should
-// be PC values, such that Buf[0] is the PC of the caller, Buf[1] is
-// the PC of that function's caller, and so on.  Max is the maximum
-// number of entries to store.  The function should store a zero to
-// indicate the top of the stack, or that the caller is on a different
-// stack, presumably a Go stack.
+// Buf 是应该存储回溯信息的地方。应该是 PC 值，比如 Buf[0] 是调用者的 PC，
+// Buf[1] 是那个函数的调用者的 PC，等等。Max是要存储的最大条目数。
+// 该函数应该存储一个零来指示堆栈的顶部，或者调用方在一个不同的堆栈上，大概是一个 Go 堆栈。
 //
-// Unlike runtime.Callers, the PC values returned should, when passed
-// to the symbolizer function, return the file/line of the call
-// instruction.  No additional subtraction is required or appropriate.
+// 不像 runtime.Callers，返回的 PC 值，当传递给符号函数时，
+// 应该返回调用指令的文件/行。不需要额外的减法，也不合适。
 //
-// On all platforms, the traceback function is invoked when a call from
-// Go to C to Go requests a stack trace. On linux/amd64, linux/ppc64le,
-// and freebsd/amd64, the traceback function is also invoked when a
-// signal is received by a thread that is executing a cgo call. The
-// traceback function should not make assumptions about when it is
-// called, as future versions of Go may make additional calls.
+// 在所有平台上，当从 Go 到 C 再到 Go 的调用请求堆栈跟踪时，都会调用回溯函数。
+// 在 linux/amd64、linux/ppc64le 和 freebsd/amd64 上，
+// 当正在执行cgo调用的线程收到信号时，也会调用回溯函数。
+// 回溯函数不应假设何时调用它，因为 Go 的未来版本可能会进行额外的调用。
 //
-// The symbolizer function will be called with a single argument, a
-// pointer to a struct:
+// symbolizer 函数将通过一个参数调用，一个指向结构的指针:
 //
 //	struct {
-//		PC      uintptr // program counter to fetch information for
-//		File    *byte   // file name (NUL terminated)
-//		Lineno  uintptr // line number
-//		Func    *byte   // function name (NUL terminated)
-//		Entry   uintptr // function entry point
-//		More    uintptr // set non-zero if more info for this PC
-//		Data    uintptr // unused by runtime, available for function
+//		PC      uintptr // 获取信息的程序计数器
+//		File    *byte   // 文件名 (NUL terminated)
+//		Lineno  uintptr // 行号
+//		Func    *byte   // 函数名 (NUL terminated)
+//		Entry   uintptr // 函数入口点
+//		More    uintptr // 如果此 PC 有更多信息，设置非零值
+//		Data    uintptr // 运行时未使用的，可用于函数的
 //	}
 //
-// In C syntax, this struct will be
+// 在 C 语法中, 这个结构体将是
 //
 //	struct {
 //		uintptr_t PC;
@@ -1169,38 +1141,27 @@ func isSystemGoroutine(gp *g, fixed bool) bool {
 //		uintptr_t Data;
 //	};
 //
-// The PC field will be a value returned by a call to the traceback
-// function.
+// PC 字段将是通过调用追溯函数返回的值。
 //
-// The first time the function is called for a particular traceback,
-// all the fields except PC will be 0. The function should fill in the
-// other fields if possible, setting them to 0/nil if the information
-// is not available. The Data field may be used to store any useful
-// information across calls. The More field should be set to non-zero
-// if there is more information for this PC, zero otherwise. If More
-// is set non-zero, the function will be called again with the same
-// PC, and may return different information (this is intended for use
-// with inlined functions). If More is zero, the function will be
-// called with the next PC value in the traceback. When the traceback
-// is complete, the function will be called once more with PC set to
-// zero; this may be used to free any information. Each call will
-// leave the fields of the struct set to the same values they had upon
-// return, except for the PC field when the More field is zero. The
-// function must not keep a copy of the struct pointer between calls.
+// 第一次调用该函数进行特定的回溯时，除PC之外的所有字段都将为 0。
+// 如果可能，该函数应填写其他字段，如果没有信息，则将其设置为 0/nil。
+// 数据字段可用于存储通话中的任何有用信息。如果此 PC 有更多信息，
+// 则 More 字段应设置为非零值，否则为零。
+// 如果 More 设置为非零，该函数将在同一 PC 上再次调用，
+// 并可能返回不同的信息(这是为了与内联函数一起使用)。如果 More 为零，
+// 将使用回溯中的下一个 PC 值调用该函数。
+// 当回溯完成时，函数将在PC设置为零的情况下被再次调用；
+// 这可以用来释放任何信息。每次调用都会将结构的字段设置为返回时的相同值，
+// 除了当 More 字段为零时的 PC 字段。函数不能在调用之间保留结构指针的副本。
 //
-// When calling SetCgoTraceback, the version argument is the version
-// number of the structs that the functions expect to receive.
-// Currently this must be zero.
+// 调用 SetCgoTraceback 时，版本参数是函数预期接收的结构的版本号。目前这必须为零。
 //
-// The symbolizer function may be nil, in which case the results of
-// the traceback function will be displayed as numbers. If the
-// traceback function is nil, the symbolizer function will never be
-// called. The context function may be nil, in which case the
-// traceback function will only be called with the context field set
-// to zero.  If the context function is nil, then calls from Go to C
-// to Go will not show a traceback for the C portion of the call stack.
+// symbolizer 函数可能为零，在这种情况下，回溯函数的结果将显示为数字。
+// 如果回溯函数为零，则永远不会调用符号化函数。上下文函数可能为零，
+// 在这种情况下，只能在上下文字段设置为零的情况下调用回溯函数。
+// 如果上下文函数为零，那么从 Go 到 C 再到 Go 的调用不会显示调用堆栈的 C 部分的回溯。
 //
-// SetCgoTraceback should be called only once, ideally from an init function.
+// SetCgoTraceback 应该只调用一次，最好从init函数调用。
 func SetCgoTraceback(version int, traceback, context, symbolizer unsafe.Pointer) {
 	if version != 0 {
 		panic("unsupported version")

@@ -264,8 +264,8 @@ func forcegchelper() {
 
 //go:nosplit
 
-// Gosched yields the processor, allowing other goroutines to run. It does not
-// suspend the current goroutine, so execution resumes automatically.
+// Gosched 让出处理器，允许其他 goroutines 运行。
+// 它不会挂起当前的 goroutine，因此执行会自动恢复。
 func Gosched() {
 	checkTimeouts()
 	mcall(gosched_m)
@@ -3803,7 +3803,7 @@ func gfpurge(_p_ *p) {
 	unlock(&sched.gFree.lock)
 }
 
-// Breakpoint executes a breakpoint trap.
+// Breakpoint 执行一个 breakpoint 陷入
 func Breakpoint() {
 	breakpoint()
 }
@@ -3823,20 +3823,14 @@ func dolockOSThread() {
 
 //go:nosplit
 
-// LockOSThread wires the calling goroutine to its current operating system thread.
-// The calling goroutine will always execute in that thread,
-// and no other goroutine will execute in it,
-// until the calling goroutine has made as many calls to
-// UnlockOSThread as to LockOSThread.
-// If the calling goroutine exits without unlocking the thread,
-// the thread will be terminated.
+// LockOSThread 将调用 goroutine 连接到其当前操作系统线程。
+// 调用 goroutine 将始终在该线程中执行，没有其他 goroutine 会在里面执行。
+// 直到调用的 goroutine 对 UnlockOSThread 的调用次数与对 lockOSThread 的调用次数一样多。
+// 如果调用 goroutine 的线程在没有解锁的情况下退出，该线程将被终止。
 //
-// All init functions are run on the startup thread. Calling LockOSThread
-// from an init function will cause the main function to be invoked on
-// that thread.
+// 所有初始化函数都在启动线程上运行。从 init 函数调用 LockOSThread 将导致在该线程上调用主函数。
 //
-// A goroutine should call LockOSThread before calling OS services or
-// non-Go library functions that depend on per-thread state.
+// 在调用依赖于每个线程状态的操作系统服务或非 Go 库函数之前，一个 goroutine 应该调用 LockOSThread。
 func LockOSThread() {
 	if atomic.Load(&newmHandoff.haveTemplateThread) == 0 && GOOS != "plan9" {
 		// If we need to start a new thread from the locked
@@ -3877,18 +3871,13 @@ func dounlockOSThread() {
 
 //go:nosplit
 
-// UnlockOSThread undoes an earlier call to LockOSThread.
-// If this drops the number of active LockOSThread calls on the
-// calling goroutine to zero, it unwires the calling goroutine from
-// its fixed operating system thread.
-// If there are no active LockOSThread calls, this is a no-op.
+// UnlockOSThread 撤销先前对 UnlockOSThread 的调用。
+// 如果这将调用 goroutine 上的活动 LockOSThread 调用数降至零，
+// 它将从其固定操作系统线程中取消调用 goroutine。如果没有活动的 LockOSThread 调用，这是一个禁止操作。
 //
-// Before calling UnlockOSThread, the caller must ensure that the OS
-// thread is suitable for running other goroutines. If the caller made
-// any permanent changes to the state of the thread that would affect
-// other goroutines, it should not call this function and thus leave
-// the goroutine locked to the OS thread until the goroutine (and
-// hence the thread) exits.
+// 在调用 UnlockOSThread 之前，调用方必须确保 OS 线程适合运行其他 goroutines。
+// 如果调用者对线程的状态做了任何永久性的改变，而这些改变会影响到其他的goroutine，
+// 那么调用者就不应该调用这个函数，从而将 goroutine 锁定在 OS 线程中，直到 goroutine(以及线程)退出。
 func UnlockOSThread() {
 	_g_ := getg()
 	if _g_.m.lockedExt == 0 {

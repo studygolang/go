@@ -371,12 +371,10 @@ func mProf_Free(b *bucket, size uintptr) {
 
 var blockprofilerate uint64 // in CPU ticks
 
-// SetBlockProfileRate controls the fraction of goroutine blocking events
-// that are reported in the blocking profile. The profiler aims to sample
-// an average of one blocking event per rate nanoseconds spent blocked.
-//
-// To include every blocking event in the profile, pass rate = 1.
-// To turn off profiling entirely, pass rate <= 0.
+// SetBlockProfileRate 控制阻塞 profile 中报告的 goroutine 阻塞事件的比例。
+// profiler 的目标是以纳秒级阻塞的速率对平均一个阻塞事件进行采样。
+// 要在 profile 中包含每个阻塞事件，传递 rate = 1。
+// 要完全关闭 profiling，传递 rate <= 0。
 func SetBlockProfileRate(rate int) {
 	var r int64
 	if rate <= 0 {
@@ -429,13 +427,11 @@ func saveblockevent(cycles int64, skip int, which bucketType) {
 
 var mutexprofilerate uint64 // fraction sampled
 
-// SetMutexProfileFraction controls the fraction of mutex contention events
-// that are reported in the mutex profile. On average 1/rate events are
-// reported. The previous rate is returned.
+// SetMutexProfileFraction 控制 mutex profile 中报告的互斥锁争用事件的比例。
+// 平均 1/rate 事件被报告。返回以前的速率 rate。
 //
-// To turn off profiling entirely, pass rate 0.
-// To just read the current rate, pass rate < 0.
-// (For n>1 the details of sampling may change.)
+// 要完全关闭 profiling，传递 rate 为 0。
+// 要只读取当前速率，通过 rate < 0。(对于 n>1，采样细节可能会改变。)
 func SetMutexProfileFraction(rate int) int {
 	if rate < 0 {
 		return int(mutexprofilerate)
@@ -460,13 +456,12 @@ func mutexevent(cycles int64, skip int) {
 
 // Go interface to profile data.
 
-// A StackRecord describes a single execution stack.
+// StackRecord 描述单个执行堆栈。
 type StackRecord struct {
 	Stack0 [32]uintptr // stack trace for this record; ends at first 0 entry
 }
 
-// Stack returns the stack trace associated with the record,
-// a prefix of r.Stack0.
+// Stack 返回与记录相关联的堆栈跟踪，前缀为 r.Stack0。
 func (r *StackRecord) Stack() []uintptr {
 	for i, v := range r.Stack0 {
 		if v == 0 {
@@ -476,40 +471,32 @@ func (r *StackRecord) Stack() []uintptr {
 	return r.Stack0[0:]
 }
 
-// MemProfileRate controls the fraction of memory allocations
-// that are recorded and reported in the memory profile.
-// The profiler aims to sample an average of
-// one allocation per MemProfileRate bytes allocated.
+// MemProfileRate 控制 memory profile 中记录和报告的内存分配比例。
+// profiler 的目标是为每个分配的 MemProfileRate bytes 抽样一个分配平均值。
 //
-// To include every allocated block in the profile, set MemProfileRate to 1.
-// To turn off profiling entirely, set MemProfileRate to 0.
+// 要在 profile 中包含每个已分配的块，请将 MemProfileRate 设置为 1。
+// 若要完全关闭分析，设置 MemProfileRate 为 0。
 //
-// The tools that process the memory profiles assume that the
-// profile rate is constant across the lifetime of the program
-// and equal to the current value. Programs that change the
-// memory profiling rate should do so just once, as early as
-// possible in the execution of the program (for example,
-// at the beginning of main).
+// 处理 memory profiles 的工具假设 profile 速率在程序的整个生命周期内是恒定的，并且等于当前值。
+// 改变内存分析速率的程序应该只改变一次，在程序执行时尽早改变(例如，在 main 的开始)。
 var MemProfileRate int = 512 * 1024
 
-// A MemProfileRecord describes the live objects allocated
-// by a particular call sequence (stack trace).
+// MemProfileRecord 描述了由特定调用序列(堆栈跟踪)分配的活动对象。
 type MemProfileRecord struct {
 	AllocBytes, FreeBytes     int64       // number of bytes allocated, freed
 	AllocObjects, FreeObjects int64       // number of objects allocated, freed
 	Stack0                    [32]uintptr // stack trace for this record; ends at first 0 entry
 }
 
-// InUseBytes returns the number of bytes in use (AllocBytes - FreeBytes).
+// InUseBytes 返回正在使用的字节数(AllocBytes - FreeBytes)。
 func (r *MemProfileRecord) InUseBytes() int64 { return r.AllocBytes - r.FreeBytes }
 
-// InUseObjects returns the number of objects in use (AllocObjects - FreeObjects).
+// InUseObjects 返回正在使用的对象数(AllocObjects - FreeObjects)。
 func (r *MemProfileRecord) InUseObjects() int64 {
 	return r.AllocObjects - r.FreeObjects
 }
 
-// Stack returns the stack trace associated with the record,
-// a prefix of r.Stack0.
+// Stack 返回与记录相关联的堆栈跟踪，前缀为 r.Stack0。
 func (r *MemProfileRecord) Stack() []uintptr {
 	for i, v := range r.Stack0 {
 		if v == 0 {
@@ -519,27 +506,20 @@ func (r *MemProfileRecord) Stack() []uintptr {
 	return r.Stack0[0:]
 }
 
-// MemProfile returns a profile of memory allocated and freed per allocation
-// site.
+// MemProfile 返回每个分配点分配和释放的内存 profile。
 //
-// MemProfile returns n, the number of records in the current memory profile.
-// If len(p) >= n, MemProfile copies the profile into p and returns n, true.
-// If len(p) < n, MemProfile does not change p and returns n, false.
+// MemProfile 返回 n，即当前 memory profile 中的记录数。
+// 如果 len(p) >= n，MemProfile 将该 profile 复制到 p 中，并返回 n，true。
+// 如果 len(p) < n，MemProfile 不会改变 p，并返回 n, false。
 //
-// If inuseZero is true, the profile includes allocation records
-// where r.AllocBytes > 0 but r.AllocBytes == r.FreeBytes.
-// These are sites where memory was allocated, but it has all
-// been released back to the runtime.
+// 如果 inuseZero 为 true，profile 包括分配记录，其中 r.AllocBytes > 0，但 r.AllocBytes == r.FreeBytes。
+// 这些是内存被分配的点，但是它已经被释放回运行时。
+// 
+// 返回的 profile 可能长达两个垃圾收集周期。
+// 这是为了避免 profile 偏向分配；因为分配是实时发生的，但是释放被延迟，直到垃圾收集器执行清理，
+// 这个 profile 只考虑有机会被垃圾收集器释放的分配。
 //
-// The returned profile may be up to two garbage collection cycles old.
-// This is to avoid skewing the profile toward allocations; because
-// allocations happen in real time but frees are delayed until the garbage
-// collector performs sweeping, the profile only accounts for allocations
-// that have had a chance to be freed by the garbage collector.
-//
-// Most clients should use the runtime/pprof package or
-// the testing package's -test.memprofile flag instead
-// of calling MemProfile directly.
+// 大多数客户端应该使用 runtime/pprof 包或 testing 包的 -test.memprofile 标志，而不是直接调用memprofile。
 func MemProfile(p []MemProfileRecord, inuseZero bool) (n int, ok bool) {
 	lock(&proflock)
 	// If we're between mProf_NextCycle and mProf_Flush, take care
@@ -616,21 +596,19 @@ func iterate_memprof(fn func(*bucket, uintptr, *uintptr, uintptr, uintptr, uintp
 	unlock(&proflock)
 }
 
-// BlockProfileRecord describes blocking events originated
-// at a particular call sequence (stack trace).
+// BlockProfileRecord 记录描述了源自特定调用序列(堆栈跟踪)的阻塞事件。
 type BlockProfileRecord struct {
 	Count  int64
 	Cycles int64
 	StackRecord
 }
 
-// BlockProfile returns n, the number of records in the current blocking profile.
-// If len(p) >= n, BlockProfile copies the profile into p and returns n, true.
-// If len(p) < n, BlockProfile does not change p and returns n, false.
+// BlockProfile 返回 n，即当前阻塞 profile 的记录数。
+// 如果 len(p) >= n，BlockProfile 复制 profile 到 p 并返回 n, true。
+// 如果 len(p) < n，BlockProfile 不会改变 p 并返回 n, false。 
 //
-// Most clients should use the runtime/pprof package or
-// the testing package's -test.blockprofile flag instead
-// of calling BlockProfile directly.
+// 大多数客户端应该使用 runtime/pprof 包或
+// testing 包的 -test.blockprofile 标志，而不是直接调用 BlockProfile
 func BlockProfile(p []BlockProfileRecord) (n int, ok bool) {
 	lock(&proflock)
 	for b := bbuckets; b != nil; b = b.allnext {
@@ -660,12 +638,11 @@ func BlockProfile(p []BlockProfileRecord) (n int, ok bool) {
 	return
 }
 
-// MutexProfile returns n, the number of records in the current mutex profile.
-// If len(p) >= n, MutexProfile copies the profile into p and returns n, true.
-// Otherwise, MutexProfile does not change p, and returns n, false.
+// MutexProfile 返回 n，当前 mutex profile 中的记录数。
+// 如果 len(p) >= n，MutexProfile 将该配置文件复制到p，并返回n，true。
+// 否则，MutexProfile 不改变p，返回n，false。
 //
-// Most clients should use the runtime/pprof package
-// instead of calling MutexProfile directly.
+// 大多数客户端应该使用 runtime/pprof 包，而不是直接调用 MutexProfile。
 func MutexProfile(p []BlockProfileRecord) (n int, ok bool) {
 	lock(&proflock)
 	for b := xbuckets; b != nil; b = b.allnext {
@@ -690,11 +667,11 @@ func MutexProfile(p []BlockProfileRecord) (n int, ok bool) {
 }
 
 // ThreadCreateProfile returns n, the number of records in the thread creation profile.
-// If len(p) >= n, ThreadCreateProfile copies the profile into p and returns n, true.
-// If len(p) < n, ThreadCreateProfile does not change p and returns n, false.
+// ThreadCreateProfile 返回 n，表示 thread creation profile 记录的数量。
+// 如果 len(p) >= n，ThreadCreateProfile 复制 profile 到 p 并返回 n, true。
+// 如果 len(p) < n，ThreadCreateProfile 不会改变 p 并返回 n, false。
 //
-// Most clients should use the runtime/pprof package instead
-// of calling ThreadCreateProfile directly.
+// 大多数客户端应该使用 runtime/pprof 包而不是直接调用 ThreadCreateProfile。
 func ThreadCreateProfile(p []StackRecord) (n int, ok bool) {
 	first := (*m)(atomic.Loadp(unsafe.Pointer(&allm)))
 	for mp := first; mp != nil; mp = mp.alllink {
@@ -778,12 +755,11 @@ func goroutineProfileWithLabels(p []StackRecord, labels []unsafe.Pointer) (n int
 	return n, ok
 }
 
-// GoroutineProfile returns n, the number of records in the active goroutine stack profile.
-// If len(p) >= n, GoroutineProfile copies the profile into p and returns n, true.
-// If len(p) < n, GoroutineProfile does not change p and returns n, false.
+// GoroutineProfile 返回 n，活动 goroutine stack profile 的记录数。
+// 如果 len(p) >= n，GoroutineProfile 将 profile 复制到 p 并返回 n，true。
+// 如果 len(p) < n，GoroutineProfile 不改变 p，返回 n，false。
 //
-// Most clients should use the runtime/pprof package instead
-// of calling GoroutineProfile directly.
+// 大多数客户端应该使用 runtime/pprof 包，而不是直接调用 GoroutineProfile。
 func GoroutineProfile(p []StackRecord) (n int, ok bool) {
 
 	return goroutineProfileWithLabels(p, nil)
@@ -796,10 +772,9 @@ func saveg(pc, sp uintptr, gp *g, r *StackRecord) {
 	}
 }
 
-// Stack formats a stack trace of the calling goroutine into buf
-// and returns the number of bytes written to buf.
-// If all is true, Stack formats stack traces of all other goroutines
-// into buf after the trace for the current goroutine.
+// Stack 将调用 goroutine 的堆栈跟踪格式化为 buf，
+// 并返回写入 buf 的字节数。如果 all 为 true，
+// Stack 将所有其他 goroutine 的堆栈跟踪格式化为当前 goroutine 跟踪之后的buf。
 func Stack(buf []byte, all bool) int {
 	if all {
 		stopTheWorld("stack trace")

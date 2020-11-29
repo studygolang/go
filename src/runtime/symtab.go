@@ -10,8 +10,7 @@ import (
 	"unsafe"
 )
 
-// Frames may be used to get function/file/line information for a
-// slice of PC values returned by Callers.
+// Frames 可用于获取调用者返回的一部分 PC 值的函数/文件/行信息。
 type Frames struct {
 	// callers is a slice of PCs that have not yet been expanded to frames.
 	callers []uintptr
@@ -21,36 +20,30 @@ type Frames struct {
 	frameStore [2]Frame
 }
 
-// Frame is the information returned by Frames for each call frame.
+// Frame 是 Frame 为每个调用帧返回的信息。
 type Frame struct {
-	// PC is the program counter for the location in this frame.
-	// For a frame that calls another frame, this will be the
-	// program counter of a call instruction. Because of inlining,
-	// multiple frames may have the same PC value, but different
-	// symbolic information.
+	// PC 是该帧中位置的程序计数器。
+	// 对于调用另一帧的帧，这将是调用指令的程序计数器。
+	// 因为内联，多个帧可能有相同的 PC 值，但符号信息不同。
 	PC uintptr
 
-	// Func is the Func value of this call frame. This may be nil
-	// for non-Go code or fully inlined functions.
+	// Func 是这个调用框架的 Func 值。
+	// 对于非 Go 代码或完全内联的函数，这可能为 nil。
 	Func *Func
 
-	// Function is the package path-qualified function name of
-	// this call frame. If non-empty, this string uniquely
-	// identifies a single function in the program.
-	// This may be the empty string if not known.
-	// If Func is not nil then Function == Func.Name().
+	// Function 是这个调用 frame 的包路径限定的函数名。
+	// 如果非空，该字符串唯一标识程序中的单个函数。
+	// 如果不知道，这可能是空字符串。如果函数不为 nil，则 Function == Func.Name()。
 	Function string
 
-	// File and Line are the file name and line number of the
-	// location in this frame. For non-leaf frames, this will be
-	// the location of a call. These may be the empty string and
-	// zero, respectively, if not known.
+	// File 和 Line 是此 frame 中位置的文件名和行号。
+	// 对于 non-leaf frames，这将是调用的位置。
+	// 如果不知道，它们可能分别是空字符串和零。
 	File string
 	Line int
 
-	// Entry point program counter for the function; may be zero
-	// if not known. If Func is not nil then Entry ==
-	// Func.Entry().
+	// 函数的入口点程序计数器；如果不知道，可能为零。
+	// 如果 Func 不为 nil，则 Entry == Func.Entry()。
 	Entry uintptr
 
 	// The runtime's internal view of the function. This field
@@ -59,17 +52,16 @@ type Frame struct {
 	funcInfo funcInfo
 }
 
-// CallersFrames takes a slice of PC values returned by Callers and
-// prepares to return function/file/line information.
-// Do not change the slice until you are done with the Frames.
+// CallersFrames 从 Callers 返回的 PC 值中提取一部分，
+// 并准备返回函数/文件/行信息。在完成 Frames 之前，不要更改切片。
 func CallersFrames(callers []uintptr) *Frames {
 	f := &Frames{callers: callers}
 	f.frames = f.frameStore[:0]
 	return f
 }
 
-// Next returns frame information for the next caller.
-// If more is false, there are no more callers (the Frame value is valid).
+// Next 返回下一个调用方的 frame 信息。
+// 如果 more 为 false，则没有更多调用方(Frame 值有效)。
 func (ci *Frames) Next() (frame Frame, more bool) {
 	for len(ci.frames) < 2 {
 		// Find the next frame.
@@ -254,7 +246,7 @@ func expandCgoFrames(pc uintptr) []Frame {
 // All code operating on a *Func must call raw() to get the *_func
 // or funcInfo() to get the funcInfo instead.
 
-// A Func represents a Go function in the running binary.
+// Func 表示正在运行的二进制文件中的 Go 函数。
 type Func struct {
 	opaque struct{} // unexported field to disallow conversions
 }
@@ -563,12 +555,9 @@ func moduledataverify1(datap *moduledata) {
 	}
 }
 
-// FuncForPC returns a *Func describing the function that contains the
-// given program counter address, or else nil.
+// FuncForPC 返回一个 *Func，描述包含给定程序计数器地址的函数，否则为 nil。
 //
-// If pc represents multiple functions because of inlining, it returns
-// the *Func describing the innermost function, but with an entry of
-// the outermost function.
+// 如果 pc 因为内联而代表多个函数，它将返回描述最里面的函数的 *Func，但带有最外面函数的条目。
 func FuncForPC(pc uintptr) *Func {
 	f := findfunc(pc)
 	if !f.valid() {
@@ -595,7 +584,7 @@ func FuncForPC(pc uintptr) *Func {
 	return f._Func()
 }
 
-// Name returns the name of the function.
+// Name 返回函数的名字。
 func (f *Func) Name() string {
 	if f == nil {
 		return ""
@@ -608,7 +597,7 @@ func (f *Func) Name() string {
 	return funcname(f.funcInfo())
 }
 
-// Entry returns the entry address of the function.
+// Entry 返回函数的入口地址。
 func (f *Func) Entry() uintptr {
 	fn := f.raw()
 	if fn.entry == 0 { // inlined version
@@ -618,10 +607,8 @@ func (f *Func) Entry() uintptr {
 	return fn.entry
 }
 
-// FileLine returns the file name and line number of the
-// source code corresponding to the program counter pc.
-// The result will not be accurate if pc is not a program
-// counter within f.
+// FileLine 返回对应于程序计数器 pc 的源代码的文件名和行号。
+// 如果 pc 不是 f 内的程序计数器，结果就不准确。
 func (f *Func) FileLine(pc uintptr) (file string, line int) {
 	fn := f.raw()
 	if fn.entry == 0 { // inlined version
