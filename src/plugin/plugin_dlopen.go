@@ -66,8 +66,7 @@ func open(name string) (*Plugin, error) {
 		pluginsMu.Unlock()
 		return nil, errors.New(`plugin.Open("` + name + `"): ` + C.GoString(cErr))
 	}
-	// TODO(crawshaw): look for plugin note, confirm it is a Go plugin
-	// and it was built with the correct toolchain.
+	// TODO(crawshaw): 查看插件说明，确认它是 Go 插件，且是使用正确的工具链构建。
 	if len(name) > 3 && name[len(name)-3:] == ".so" {
 		name = name[:len(name)-3]
 	}
@@ -83,8 +82,7 @@ func open(name string) (*Plugin, error) {
 		pluginsMu.Unlock()
 		return nil, errors.New(`plugin.Open("` + name + `"): ` + errstr)
 	}
-	// This function can be called from the init function of a plugin.
-	// Drop a placeholder in the map so subsequent opens can wait on it.
+    // 可从插件的 init 函数中调用此函数。在 map 中放置一占位符，以便随后的 opens 等待它。
 	p := &Plugin{
 		pluginpath: pluginpath,
 		loaded:     make(chan struct{}),
@@ -101,7 +99,7 @@ func open(name string) (*Plugin, error) {
 		doInit(initTask)
 	}
 
-	// Fill out the value of each plugin symbol.
+	// 填写每个插件符号的值。
 	updatedSyms := map[string]interface{}{}
 	for symName, sym := range syms {
 		isFunc := symName[0] == '.'
@@ -124,8 +122,7 @@ func open(name string) (*Plugin, error) {
 		} else {
 			(*valp)[1] = p
 		}
-		// we can't add to syms during iteration as we'll end up processing
-		// some symbols twice with the inability to tell if the symbol is a function
+		// 无法在迭代过程中向 syms 添加符号，因为有些符号会处理两次，以至于最终无法判断一个符号是否是函数。
 		updatedSyms[symName] = sym
 	}
 	p.syms = updatedSyms
@@ -146,9 +143,9 @@ var (
 	plugins   map[string]*Plugin
 )
 
-// lastmoduleinit is defined in package runtime
+// lastmoduleinit 定义在包 runtime 中。
 func lastmoduleinit() (pluginpath string, syms map[string]interface{}, errstr string)
 
-// doInit is defined in package runtime
-//go:linkname doInit runtime.doInit
-func doInit(t unsafe.Pointer) // t should be a *runtime.initTask
+// doInit 定义在包 runtime 中。
+// go:linkname doInit runtime.doInit
+func doInit(t unsafe.Pointer) // t 应是一个 *runtime.initTask

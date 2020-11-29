@@ -12,6 +12,5 @@ import (
 )
 
 func TestPlugin(t *testing.T) {
-	// This test makes sure that executable that imports plugin
-	// package can actually run. See issue #28789 for details.
+	// 本测试确保导入 plugin 包的可执行文件确实能执行。具体参见 issue #28789。
 }

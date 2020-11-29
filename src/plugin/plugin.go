@@ -2,47 +2,40 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package plugin implements loading and symbol resolution of Go plugins.
+// plugin 包实现 Go 插件加载和符号解析。
 //
-// A plugin is a Go main package with exported functions and variables that
-// has been built with:
+// 一个插件就是一个 Go 主程序包，它具有导出函数和变量，这些函数和变量是使用以下命令构建的：
 //
 //	go build -buildmode=plugin
 //
-// When a plugin is first opened, the init functions of all packages not
-// already part of the program are called. The main function is not run.
-// A plugin is only initialized once, and cannot be closed.
-//
-// Currently plugins are only supported on Linux, FreeBSD, and macOS.
-// Please report any issues.
+// 首次打开一个插件时（此时主函数尚未运行），将调用所有包中的 init 函数，这些 init 函数不包含在程序中。
+// 一个插件只初始化一次且可以被关闭。
 package plugin
 
-// Plugin is a loaded Go plugin.
+// Plugin 是一个已加载的 Go 插件。
 type Plugin struct {
 	pluginpath string
-	err        string        // set if plugin failed to load
-	loaded     chan struct{} // closed when loaded
+	err        string        // 插件加载失败时设置错误值
+	loaded     chan struct{} // 加载后关闭
 	syms       map[string]interface{}
 }
 
-// Open opens a Go plugin.
-// If a path has already been opened, then the existing *Plugin is returned.
-// It is safe for concurrent use by multiple goroutines.
+// Open 打开一个 Go 插件，如果插件所在路径已打开，则返回现存的 *Plugin。
+// Open 是并发安全的。
 func Open(path string) (*Plugin, error) {
 	return open(path)
 }
 
-// Lookup searches for a symbol named symName in plugin p.
-// A symbol is any exported variable or function.
-// It reports an error if the symbol is not found.
-// It is safe for concurrent use by multiple goroutines.
+// Lookup 在插件 p 中搜索名为 symName 的符号，符号是任何导出变量或函数。
+// 如果找不到该符号，Lookup 将报告错误。
+// Lookup 是并发安全的。
 func (p *Plugin) Lookup(symName string) (Symbol, error) {
 	return lookup(p, symName)
 }
 
-// A Symbol is a pointer to a variable or function.
+// Symbol 是一个指向变量或函数的指针。
 //
-// For example, a plugin defined as
+// 例如，一个以如下代码定义的插件
 //
 //	package main
 //
@@ -52,8 +45,7 @@ func (p *Plugin) Lookup(symName string) (Symbol, error) {
 //
 //	func F() { fmt.Printf("Hello, number %d\n", V) }
 //
-// may be loaded with the Open function and then the exported package
-// symbols V and F can be accessed
+// 可使用 Open 函数导入，然后就能访问导出符号 V 和 F。
 //
 //	p, err := plugin.Open("plugin_name.so")
 //	if err != nil {
@@ -68,5 +60,5 @@ func (p *Plugin) Lookup(symName string) (Symbol, error) {
 //		panic(err)
 //	}
 //	*v.(*int) = 7
-//	f.(func())() // prints "Hello, number 7"
+//	f.(func())() // 打印 "Hello, number 7"
 type Symbol interface{}
