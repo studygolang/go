@@ -36,9 +36,7 @@ func sliceOfString(s [][]byte) []string {
 	return result
 }
 
-// For ease of reading, the test cases use strings that are converted to byte
-// slices before invoking the functions.
-
+// 为了便于阅读，测试用例在调用函数之前将字符串转换成字节切片。
 var abcd = "abcd"
 var faces = "☺☻☹"
 var commas = "1,2,3,4"
@@ -51,7 +49,7 @@ type BinOpTest struct {
 }
 
 func TestEqual(t *testing.T) {
-	// Run the tests and check for allocation at the same time.
+	// 同时运行测试并检查分配情况。
 	allocs := testing.AllocsPerRun(10, func() {
 		for _, tt := range compareTests {
 			eql := Equal(tt.a, tt.b)
@@ -73,7 +71,7 @@ func TestEqualExhaustive(t *testing.T) {
 	a := make([]byte, size)
 	b := make([]byte, size)
 	b_init := make([]byte, size)
-	// randomish but deterministic data
+	// 随机但确定性的数据
 	for i := 0; i < size; i++ {
 		a[i] = byte(17 * i)
 		b_init[i] = byte(23*i + 100)
@@ -92,8 +90,8 @@ func TestEqualExhaustive(t *testing.T) {
 	}
 }
 
-// make sure Equal returns false for minimally different strings. The data
-// is all zeros except for a single one in one location.
+// 确保对于不同的字符串，Equal 返回 false。
+// 除了在一个位置上有一个数字外，所有的数据都是零。
 func TestNotEqual(t *testing.T) {
 	var size = 128
 	if testing.Short() {
@@ -130,7 +128,7 @@ var indexTests = []BinOpTest{
 	{"foo", "", 0},
 	{"foo", "o", 1},
 	{"abcABCabc", "A", 3},
-	// cases with one byte strings - test IndexByte and special case in Index()
+	// 一个字节字符串的情况 - 测试 IndexByte 和 Index() 的特殊情况
 	{"", "a", -1},
 	{"x", "a", -1},
 	{"x", "x", 0},
@@ -143,7 +141,7 @@ var indexTests = []BinOpTest{
 	{"oooooooooooooooooooooo", "r", -1},
 	{"oxoxoxoxoxoxoxoxoxoxoxoy", "oy", 22},
 	{"oxoxoxoxoxoxoxoxoxoxoxox", "oy", -1},
-	// test fallback to Rabin-Karp.
+	// 测试回退到 Rabin-Karp.
 	{"000000000000000000000000000000000000000000000000000000000000000000000001", "0000000000000000000000000000000000000000000000000000000000000000001", 5},
 }
 
@@ -203,8 +201,7 @@ var lastIndexAnyTests = []BinOpTest{
 	{"0123456\xcf\x80abc", "\xcfb\x80", 10},
 }
 
-// Execute f on each test case.  funcName should be the name of f; it's used
-// in failure reports.
+// 在每个测试用例上执行 f。funcName 应该是 f 的名称；它用于故障报告中。
 func runIndexTests(t *testing.T, f func(s, sep []byte) int, funcName string, testCases []BinOpTest) {
 	for _, test := range testCases {
 		a := []byte(test.a)
@@ -219,9 +216,9 @@ func runIndexTests(t *testing.T, f func(s, sep []byte) int, funcName string, tes
 		b []byte
 		i int
 	}{
-		// case for function Index.
+		// Index 函数的用例.
 		{[]byte("000000000000000000000000000000000000000000000000000000000000000000000001"), []byte("0000000000000000000000000000000000000000000000000000000000000000001"), 5},
-		// case for function LastIndex.
+		// LastIndex 函数的用例.
 		{[]byte("000000000000000000000000000000000000000000000000000000000000000010000"), []byte("00000000000000000000000000000000000000000000000000000000000001"), 3},
 	}
 	allocs := testing.AllocsPerRun(100, func() {
@@ -276,10 +273,10 @@ func TestLastIndexByte(t *testing.T) {
 	testCases := []BinOpTest{
 		{"", "q", -1},
 		{"abcdef", "q", -1},
-		{"abcdefabcdef", "a", len("abcdef")},      // something in the middle
-		{"abcdefabcdef", "f", len("abcdefabcde")}, // last byte
-		{"zabcdefabcdef", "z", 0},                 // first byte
-		{"a☺b☻c☹d", "b", len("a☺")},               // non-ascii
+		{"abcdefabcdef", "a", len("abcdef")},      // 中间的
+		{"abcdefabcdef", "f", len("abcdefabcde")}, // 最后一个字节
+		{"zabcdefabcdef", "z", 0},                 // 第一个字节
+		{"a☺b☻c☹d", "b", len("a☺")},               // 非 ascii
 	}
 	for _, test := range testCases {
 		actual := LastIndexByte([]byte(test.a), test.b[0])
@@ -289,7 +286,7 @@ func TestLastIndexByte(t *testing.T) {
 	}
 }
 
-// test a larger buffer with different sizes and alignments
+// 用不同的大小和排列测试较大的缓冲区
 func TestIndexByteBig(t *testing.T) {
 	var n = 1024
 	if testing.Short() {
@@ -297,7 +294,7 @@ func TestIndexByteBig(t *testing.T) {
 	}
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
-		// different start alignments
+		// 不同的开始排列
 		b1 := b[i:]
 		for j := 0; j < len(b1); j++ {
 			b1[j] = 'x'
@@ -311,7 +308,7 @@ func TestIndexByteBig(t *testing.T) {
 				t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
 			}
 		}
-		// different end alignments
+		// 不同的结束排列
 		b1 = b[:i]
 		for j := 0; j < len(b1); j++ {
 			b1[j] = 'x'
@@ -325,7 +322,7 @@ func TestIndexByteBig(t *testing.T) {
 				t.Errorf("IndexByte(%q, 'x') = %v", b1, pos)
 			}
 		}
-		// different start and end alignments
+		// 不同的开始和结束排列
 		b1 = b[i/2 : n-(i+1)/2]
 		for j := 0; j < len(b1); j++ {
 			b1[j] = 'x'
@@ -342,10 +339,10 @@ func TestIndexByteBig(t *testing.T) {
 	}
 }
 
-// test a small index across all page offsets
+// 在所有页面偏移量上测试一个小索引
 func TestIndexByteSmall(t *testing.T) {
-	b := make([]byte, 5015) // bigger than a page
-	// Make sure we find the correct byte even when straddling a page.
+	b := make([]byte, 5015) // 大于一页
+	// 确保即使跨页，我们也能找到正确的字节。
 	for i := 0; i <= len(b)-15; i++ {
 		for j := 0; j < 15; j++ {
 			b[i+j] = byte(100 + j)
@@ -360,7 +357,7 @@ func TestIndexByteSmall(t *testing.T) {
 			b[i+j] = 0
 		}
 	}
-	// Make sure matches outside the slice never trigger.
+	// 确保切片之外的匹配不会被触发。
 	for i := 0; i <= len(b)-15; i++ {
 		for j := 0; j < 15; j++ {
 			b[i+j] = 1
@@ -394,7 +391,7 @@ func TestIndexRune(t *testing.T) {
 		{"☺a", 'a', 3},
 		{"a☻☺b", '☺', 4},
 
-		// RuneError should match any invalid UTF-8 byte sequence.
+		// RuneError 应该匹配任意无效的 UTF-8 字节序列。
 		{"�", '�', 0},
 		{"\xff", '�', 0},
 		{"☻x�", '�', len("☻x")},
@@ -402,7 +399,7 @@ func TestIndexRune(t *testing.T) {
 		{"☻x\xe2\x98�", '�', len("☻x")},
 		{"☻x\xe2\x98x", '�', len("☻x")},
 
-		// Invalid rune values should never match.
+		// 无效的 rune 值应该永远不被匹配到。
 		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", -1, -1},
 		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", 0xD800, -1}, // Surrogate pair
 		{"a☺b☻c☹d\xe2\x98�\xff�\xed\xa0\x80", utf8.MaxRune + 1, -1},
@@ -427,9 +424,9 @@ func TestIndexRune(t *testing.T) {
 	}
 }
 
-// test count of a single byte across page offsets
+// 测试跨页偏移量单个字节的数量
 func TestCountByte(t *testing.T) {
-	b := make([]byte, 5015) // bigger than a page
+	b := make([]byte, 5015) // 大于一页
 	windows := []int{1, 2, 3, 4, 15, 16, 17, 31, 32, 33, 63, 64, 65, 128}
 	testCountWindow := func(i, window int) {
 		for j := 0; j < window; j++ {
@@ -467,7 +464,7 @@ func TestCountByte(t *testing.T) {
 	}
 }
 
-// Make sure we don't count bytes outside our window
+// 确保我们不在窗口外计算字节数
 func TestCountByteNoMatch(t *testing.T) {
 	b := make([]byte, 5015)
 	windows := []int{1, 2, 3, 4, 15, 16, 17, 31, 32, 33, 63, 64, 65, 128}
@@ -476,11 +473,11 @@ func TestCountByteNoMatch(t *testing.T) {
 			if window > len(b[i:]) {
 				window = len(b[i:])
 			}
-			// Fill the window with non-match
+			// 用非匹配填充窗口
 			for j := 0; j < window; j++ {
 				b[i+j] = byte(100)
 			}
-			// Try to find something that doesn't exist
+			// 试着找不存在的东西
 			p := Count(b[i:i+window], []byte{0})
 			if p != 0 {
 				t.Errorf("TestCountByteNoMatch(%q, 0) = %d", b[i:i+window], p)
@@ -729,7 +726,7 @@ func TestSplit(t *testing.T) {
 	for _, tt := range splittests {
 		a := SplitN([]byte(tt.s), []byte(tt.sep), tt.n)
 
-		// Appending to the results should not change future results.
+		// 追加到结果中不应该改变将来的结果。
 		var x []byte
 		for _, v := range a {
 			x = append(v, 'z')
@@ -787,7 +784,7 @@ func TestSplitAfter(t *testing.T) {
 	for _, tt := range splitaftertests {
 		a := SplitAfterN([]byte(tt.s), []byte(tt.sep), tt.n)
 
-		// Appending to the results should not change future results.
+		// 追加到结果中不应该改变将来的结果。
 		var x []byte
 		for _, v := range a {
 			x = append(v, 'z')
@@ -840,7 +837,7 @@ func TestFields(t *testing.T) {
 		b := []byte(tt.s)
 		a := Fields(b)
 
-		// Appending to the results should not change future results.
+		// 追加到结果中不应该改变将来的结果。
 		var x []byte
 		for _, v := range a {
 			x = append(v, 'z')
@@ -883,7 +880,7 @@ func TestFieldsFunc(t *testing.T) {
 		b := []byte(tt.s)
 		a := FieldsFunc(b, pred)
 
-		// Appending to the results should not change future results.
+		// 追加到结果中不应该改变将来的结果。
 		var x []byte
 		for _, v := range a {
 			x = append(v, 'z')
@@ -905,8 +902,8 @@ func TestFieldsFunc(t *testing.T) {
 	}
 }
 
-// Test case for any function which accepts and returns a byte slice.
-// For ease of creation, we write the input byte slice as a string.
+// 接受任一函数并返回字节切片的的测试用例。
+// 为了便于创建，我们将输入的字节切片写成字符串。
 type StringTest struct {
 	in  string
 	out []byte
@@ -960,8 +957,7 @@ var trimSpaceTests = []StringTest{
 	{"x ☺ ", []byte("x ☺")},
 }
 
-// Execute f on each test case.  funcName should be the name of f; it's used
-// in failure reports.
+// 在每个测试用例上执行 f。funcName 应该是 f 的名称;它用于故障报告中。
 func runStringTests(t *testing.T, f func([]byte) []byte, funcName string, testCases []StringTest) {
 	for _, tc := range testCases {
 		actual := f([]byte(tc.in))
@@ -985,7 +981,7 @@ func tenRunes(r rune) string {
 	return string(runes)
 }
 
-// User-defined self-inverse mapping function
+// 用户自定义的自逆映射函数
 func rot13(r rune) rune {
 	const step = 13
 	if r >= 'a' && r <= 'z' {
@@ -998,10 +994,10 @@ func rot13(r rune) rune {
 }
 
 func TestMap(t *testing.T) {
-	// Run a couple of awful growth/shrinkage tests
+	// 运行几个糟糕的增长/收缩测试
 	a := tenRunes('a')
 
-	// 1.  Grow. This triggers two reallocations in Map.
+	// 1.  Grow. 这将在 Map 中触发两次重分配。
 	maxRune := func(r rune) rune { return unicode.MaxRune }
 	m := Map(maxRune, []byte(a))
 	expect := tenRunes(unicode.MaxRune)
@@ -1163,7 +1159,7 @@ func repeat(b []byte, count int) (err error) {
 	return
 }
 
-// See Issue golang.org/issue/16237
+// 参见 Issue golang.org/issue/16237
 func TestRepeatCatchesOverflow(t *testing.T) {
 	tests := [...]struct {
 		s      string
@@ -1231,7 +1227,7 @@ func TestRunes(t *testing.T) {
 			continue
 		}
 		if !tt.lossy {
-			// can only test reassembly if we didn't lose information
+			// 只有在没有丢失信息的情况下才能测试重组
 			s := string(a)
 			if s != tt.in {
 				t.Errorf("string(Runes(%q)) = %x; want %x", tin, s, tin)
@@ -1417,12 +1413,12 @@ var indexFuncTests = []IndexFuncTest{
 	{"abc", isDigit, -1, -1},
 	{"0123", isDigit, 0, 3},
 	{"a1b", isDigit, 1, 1},
-	{space, isSpace, 0, len(space) - 3}, // last rune in space is 3 bytes
+	{space, isSpace, 0, len(space) - 3}, // 空间中的最后一个 rune 是 3 字节
 	{"\u0e50\u0e5212hello34\u0e50\u0e51", isDigit, 0, 18},
 	{"\u2C6F\u2C6F\u2C6F\u2C6FABCDhelloEF\u2C6F\u2C6FGH\u2C6F\u2C6F", isUpper, 0, 34},
 	{"12\u0e50\u0e52hello34\u0e50\u0e51", not(isDigit), 8, 12},
 
-	// tests of invalid UTF-8
+	// 无效 UTF-8 的测试
 	{"\x801", isDigit, 1, 1},
 	{"\x80abc", isDigit, -1, -1},
 	{"\xc0a\xc0", isValidRune, 1, 1},
@@ -1667,7 +1663,7 @@ func TestContainsRune(t *testing.T) {
 
 var makeFieldsInput = func() []byte {
 	x := make([]byte, 1<<20)
-	// Input is ~10% space, ~10% 2-byte UTF-8, rest ASCII non-space.
+	// 输入约 10% 是空格，约 10% 是2字节的 UTF-8,其余为 ASCII 无空格。
 	for i := range x {
 		switch rand.Intn(10) {
 		case 0:
@@ -1687,7 +1683,7 @@ var makeFieldsInput = func() []byte {
 
 var makeFieldsInputASCII = func() []byte {
 	x := make([]byte, 1<<20)
-	// Input is ~10% space, rest ASCII non-space.
+	// 输入约 10% 是空格，其余为 ASCII 无空格。
 	for i := range x {
 		if rand.Intn(10) == 0 {
 			x[i] = ' '
@@ -1894,7 +1890,7 @@ func BenchmarkBytesCompare(b *testing.B) {
 }
 
 func BenchmarkIndexAnyASCII(b *testing.B) {
-	x := Repeat([]byte{'#'}, 2048) // Never matches set
+	x := Repeat([]byte{'#'}, 2048) // 没有匹配设置
 	cs := "0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz"
 	for k := 1; k <= 2048; k <<= 4 {
 		for j := 1; j <= 64; j <<= 1 {
@@ -1908,7 +1904,7 @@ func BenchmarkIndexAnyASCII(b *testing.B) {
 }
 
 func BenchmarkIndexAnyUTF8(b *testing.B) {
-	x := Repeat([]byte{'#'}, 2048) // Never matches set
+	x := Repeat([]byte{'#'}, 2048) // 没有匹配设置
 	cs := "你好世界, hello world. 你好世界, hello world. 你好世界, hello world."
 	for k := 1; k <= 2048; k <<= 4 {
 		for j := 1; j <= 64; j <<= 1 {
@@ -1922,7 +1918,7 @@ func BenchmarkIndexAnyUTF8(b *testing.B) {
 }
 
 func BenchmarkLastIndexAnyASCII(b *testing.B) {
-	x := Repeat([]byte{'#'}, 2048) // Never matches set
+	x := Repeat([]byte{'#'}, 2048) // 没有匹配集合
 	cs := "0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz"
 	for k := 1; k <= 2048; k <<= 4 {
 		for j := 1; j <= 64; j <<= 1 {
@@ -1936,7 +1932,7 @@ func BenchmarkLastIndexAnyASCII(b *testing.B) {
 }
 
 func BenchmarkLastIndexAnyUTF8(b *testing.B) {
-	x := Repeat([]byte{'#'}, 2048) // Never matches set
+	x := Repeat([]byte{'#'}, 2048) // 没有匹配集合
 	cs := "你好世界, hello world. 你好世界, hello world. 你好世界, hello world."
 	for k := 1; k <= 2048; k <<= 4 {
 		for j := 1; j <= 64; j <<= 1 {
@@ -1954,7 +1950,7 @@ func BenchmarkTrimASCII(b *testing.B) {
 	for k := 1; k <= 4096; k <<= 4 {
 		for j := 1; j <= 16; j <<= 1 {
 			b.Run(fmt.Sprintf("%d:%d", k, j), func(b *testing.B) {
-				x := Repeat([]byte(cs[:j]), k) // Always matches set
+				x := Repeat([]byte(cs[:j]), k) // 始终匹配集合
 				for i := 0; i < b.N; i++ {
 					Trim(x[:k], cs[:j])
 				}

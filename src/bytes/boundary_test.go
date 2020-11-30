@@ -12,17 +12,13 @@ import (
 	"testing"
 )
 
-// This file tests the situation where byte operations are checking
-// data very near to a page boundary. We want to make sure those
-// operations do not read across the boundary and cause a page
-// fault where they shouldn't.
+// 此文件测试检查数据非常接近页面边界的字节操作的情况。
+// 我们希望确保这些操作不会跨界读取，
+// 不会在它们不应该出现的地方导致页面错误。
 
-// These tests run only on linux. The code being tested is
-// not OS-specific, so it does not need to be tested on all
-// operating systems.
+// 这些测试只在 linux 上运行。测试的代码不受特定操作系统的限制。
 
-// dangerousSlice returns a slice which is immediately
-// preceded and followed by a faulting page.
+// dangerousSlice 返回一个切片，它的前面和后面都是一个错误页面。
 func dangerousSlice(t *testing.T) []byte {
 	pagesize := syscall.Getpagesize()
 	b, err := syscall.Mmap(0, 0, 3*pagesize, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_ANONYMOUS|syscall.MAP_PRIVATE)
@@ -68,11 +64,11 @@ func TestIndexNearPageBoundary(t *testing.T) {
 	var q [64]byte
 	b := dangerousSlice(t)
 	if len(b) > 256 {
-		// Only worry about when we're near the end of a page.
+		// 只有快到一页的时候才会担心。
 		b = b[len(b)-256:]
 	}
 	for j := 1; j < len(q); j++ {
-		q[j-1] = 1 // difference is only found on the last byte
+		q[j-1] = 1 // 只在最后一个字节上发现差异
 		for i := range b {
 			idx := Index(b[i:], q[:j])
 			if idx != -1 {

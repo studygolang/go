@@ -15,7 +15,7 @@ import (
 )
 
 func ExampleBuffer() {
-	var b bytes.Buffer // A Buffer needs no initialization.
+	var b bytes.Buffer // Buffer 不需要初始化。
 	b.Write([]byte("Hello "))
 	fmt.Fprintf(&b, "world!")
 	b.WriteTo(os.Stdout)
@@ -23,7 +23,7 @@ func ExampleBuffer() {
 }
 
 func ExampleBuffer_reader() {
-	// A Buffer can turn a string or a []byte into an io.Reader.
+	// Buffer 可以将字符串或 []byte 转换为一个 io.Reader。
 	buf := bytes.NewBufferString("R29waGVycyBydWxlIQ==")
 	dec := base64.NewDecoder(base64.StdEncoding, buf)
 	io.Copy(os.Stdout, dec)
@@ -48,40 +48,40 @@ func ExampleBuffer_Len() {
 }
 
 func ExampleCompare() {
-	// Interpret Compare's result by comparing it to zero.
+	// 将比较的结果与零进行比较，来解释比较的结果。
 	var a, b []byte
 	if bytes.Compare(a, b) < 0 {
-		// a less b
+		// a 小于 b
 	}
 	if bytes.Compare(a, b) <= 0 {
-		// a less or equal b
+		// a 小于等于 b
 	}
 	if bytes.Compare(a, b) > 0 {
-		// a greater b
+		// a 大于 b
 	}
 	if bytes.Compare(a, b) >= 0 {
-		// a greater or equal b
+		// a 大于等于 b
 	}
 
-	// Prefer Equal to Compare for equality comparisons.
+	// 相等的比较，首选 Equal。
 	if bytes.Equal(a, b) {
-		// a equal b
+		// a 等于 b
 	}
 	if !bytes.Equal(a, b) {
-		// a not equal b
+		// a 不等于 b
 	}
 }
 
 func ExampleCompare_search() {
-	// Binary search to find a matching byte slice.
+	// 二分查找，以找到匹配的字节切片。
 	var needle []byte
-	var haystack [][]byte // Assume sorted
+	var haystack [][]byte // 假设已排序
 	i := sort.Search(len(haystack), func(i int) bool {
-		// Return haystack[i] >= needle.
+		// 返回 haystack[i] >= needle.
 		return bytes.Compare(haystack[i], needle) >= 0
 	})
 	if i < len(haystack) && bytes.Equal(haystack[i], needle) {
-		// Found it!
+		// 未找到!
 	}
 }
 
@@ -155,7 +155,7 @@ func ExampleContainsRune() {
 
 func ExampleCount() {
 	fmt.Println(bytes.Count([]byte("cheese"), []byte("e")))
-	fmt.Println(bytes.Count([]byte("five"), []byte(""))) // before & after each rune
+	fmt.Println(bytes.Count([]byte("five"), []byte(""))) // 在每个 rune 之前和之后
 	// Output:
 	// 3
 	// 5

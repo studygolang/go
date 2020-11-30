@@ -100,8 +100,7 @@ func TestReaderAt(t *testing.T) {
 }
 
 func TestReaderAtConcurrent(t *testing.T) {
-	// Test for the race detector, to verify ReadAt doesn't mutate
-	// any state.
+	// 测试竞态检测器，以验证 ReadAt 没有改变任何状态。
 	r := NewReader([]byte("0123456789"))
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
@@ -116,9 +115,8 @@ func TestReaderAtConcurrent(t *testing.T) {
 }
 
 func TestEmptyReaderConcurrent(t *testing.T) {
-	// Test for the race detector, to verify a Read that doesn't yield any bytes
-	// is okay to use from multiple goroutines. This was our historic behavior.
-	// See golang.org/issue/7856
+	// 测试竞态检测器，以验证不产生任何字节的读取是否可以从多个 goroutines 使用。这是我们的历史行为。
+	// 参见 golang.org/issue/7856
 	r := NewReader([]byte{})
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
@@ -196,7 +194,7 @@ func TestUnreadRuneError(t *testing.T) {
 	for _, tt := range UnreadRuneErrorTests {
 		reader := NewReader([]byte("0123456789"))
 		if _, _, err := reader.ReadRune(); err != nil {
-			// should not happen
+			// 不应该发生
 			t.Fatal(err)
 		}
 		tt.f(reader)
@@ -210,11 +208,11 @@ func TestUnreadRuneError(t *testing.T) {
 func TestReaderDoubleUnreadRune(t *testing.T) {
 	buf := NewBuffer([]byte("groucho"))
 	if _, _, err := buf.ReadRune(); err != nil {
-		// should not happen
+		// 不应该发生
 		t.Fatal(err)
 	}
 	if err := buf.UnreadByte(); err != nil {
-		// should not happen
+		// 不应该发生
 		t.Fatal(err)
 	}
 	if err := buf.UnreadByte(); err == nil {
@@ -222,8 +220,7 @@ func TestReaderDoubleUnreadRune(t *testing.T) {
 	}
 }
 
-// verify that copying from an empty reader always has the same results,
-// regardless of the presence of a WriteTo method.
+// 验证从空读取器进行的复制始终具有相同的结果，而不管是否存在 WriteTo 方法。
 func TestReaderCopyNothing(t *testing.T) {
 	type nErr struct {
 		n   int64
@@ -235,7 +232,7 @@ func TestReaderCopyNothing(t *testing.T) {
 	type justWriter struct {
 		io.Writer
 	}
-	discard := justWriter{ioutil.Discard} // hide ReadFrom
+	discard := justWriter{ioutil.Discard} // 隐藏 ReadFrom
 
 	var with, withOut nErr
 	with.n, with.err = io.Copy(discard, NewReader(nil))
@@ -245,7 +242,7 @@ func TestReaderCopyNothing(t *testing.T) {
 	}
 }
 
-// tests that Len is affected by reads, but Size is not.
+// 测试 Len 是否受读取的影响，而 Size 不受影响。
 func TestReaderLenSize(t *testing.T) {
 	r := NewReader([]byte("abc"))
 	io.CopyN(ioutil.Discard, r, 1)

@@ -43,7 +43,7 @@ func TestCompare(t *testing.T) {
 	for _, tt := range compareTests {
 		numShifts := 16
 		buffer := make([]byte, len(tt.b)+numShifts)
-		// vary the input alignment of tt.b
+		// 改变 tt.b 的输入对齐
 		for offset := 0; offset <= numShifts; offset++ {
 			shiftedB := buffer[offset : len(tt.b)+offset]
 			copy(shiftedB, tt.b)
@@ -66,7 +66,7 @@ func TestCompareIdenticalSlice(t *testing.T) {
 }
 
 func TestCompareBytes(t *testing.T) {
-	lengths := make([]int, 0) // lengths to test in ascending order
+	lengths := make([]int, 0) // 测试的 lengths 以升序排序
 	for i := 0; i <= 128; i++ {
 		lengths = append(lengths, i)
 	}
@@ -80,12 +80,12 @@ func TestCompareBytes(t *testing.T) {
 	a := make([]byte, n+1)
 	b := make([]byte, n+1)
 	for _, len := range lengths {
-		// randomish but deterministic data. No 0 or 255.
+		// 随机但确定性的数据。没有 0 或 255。
 		for i := 0; i < len; i++ {
 			a[i] = byte(1 + 31*i%254)
 			b[i] = byte(1 + 31*i%254)
 		}
-		// data past the end is different
+		// 超过末尾的数据是不同的
 		for i := len; i <= n; i++ {
 			a[i] = 8
 			b[i] = 9
@@ -121,14 +121,14 @@ func TestCompareBytes(t *testing.T) {
 }
 
 func TestEndianBaseCompare(t *testing.T) {
-	// This test compares byte slices that are almost identical, except one
-	// difference that for some j, a[j]>b[j] and a[j+1]<b[j+1]. If the implementation
-	// compares large chunks with wrong endianness, it gets wrong result.
-	// no vector register is larger than 512 bytes for now
+	// 这个测试比较的是除了 j 不同几乎相同的字节切片，
+	// a[j]>b[j] and a[j+1]<b[j+1]. If the implementation
+	// 如果将较大的数据块和错误的字节存储顺序进行比较，它会得到错误的结果。
+	// 目前没有大于512字节的向量寄存器。
 	const maxLength = 512
 	a := make([]byte, maxLength)
 	b := make([]byte, maxLength)
-	// randomish but deterministic data. No 0 or 255.
+	// 随机但确定性的数据。没有 0 或 255。
 	for i := 0; i < maxLength; i++ {
 		a[i] = byte(1 + 31*i%254)
 		b[i] = byte(1 + 31*i%254)
