@@ -4,13 +4,10 @@
 
 package strconv
 
-// FormatComplex converts the complex number c to a string of the
-// form (a+bi) where a and b are the real and imaginary parts,
-// formatted according to the format fmt and precision prec.
+// FormatComplex 根据 fmt 格式和精确度 prec 将复数 c 转换为 (a+bi) 的形式，其中 a 和 b 分别表示实部和虚部。
 //
-// The format fmt and precision prec have the same meaning as in FormatFloat.
-// It rounds the result assuming that the original was obtained from a complex
-// value of bitSize bits, which must be 64 for complex64 and 128 for complex128.
+// fmt 格式和精确度 prec 与 FormatFloat 中的定义相同。
+// 它假设原始数据是从 bitSize 位的复数值中获得的，复数64必须是64，复数128必须是128。
 func FormatComplex(c complex128, fmt byte, prec, bitSize int) string {
 	if bitSize != 64 && bitSize != 128 {
 		panic("invalid bitSize")

@@ -4,9 +4,9 @@
 
 package strconv
 
-// ParseBool returns the boolean value represented by the string.
-// It accepts 1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
-// Any other value returns an error.
+// ParseBool 返回字符串表示的bool值
+// 可接受字符串 1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
+// 其他的字符串会报错
 func ParseBool(str string) (bool, error) {
 	switch str {
 	case "1", "t", "T", "true", "TRUE", "True":
@@ -17,7 +17,7 @@ func ParseBool(str string) (bool, error) {
 	return false, syntaxError("ParseBool", str)
 }
 
-// FormatBool returns "true" or "false" according to the value of b.
+// FormatBool 根据b的值返回 "true" 或 "false" 的字符串
 func FormatBool(b bool) string {
 	if b {
 		return "true"
@@ -25,8 +25,8 @@ func FormatBool(b bool) string {
 	return "false"
 }
 
-// AppendBool appends "true" or "false", according to the value of b,
-// to dst and returns the extended buffer.
+// AppendBool 根据b的值选择字符串 "true" 或 "false" 添加到 dst 中，并返回扩展后的 slice。
+// 等价于 append(dst,FormatBool(b)...)
 func AppendBool(dst []byte, b bool) []byte {
 	if b {
 		return append(dst, "true"...)

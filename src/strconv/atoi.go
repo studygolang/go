@@ -56,7 +56,7 @@ const IntSize = intSize
 
 const maxUint64 = 1<<64 - 1
 
-// ParseUint is like ParseInt but for unsigned numbers.
+// ParseUint 类似 ParseInt 但不接受正负号，用于无符号整型。
 func ParseUint(s string, base int, bitSize int) (uint64, error) {
 	const fnParseUint = "ParseUint"
 
@@ -156,26 +156,17 @@ func ParseUint(s string, base int, bitSize int) (uint64, error) {
 	return n, nil
 }
 
-// ParseInt interprets a string s in the given base (0, 2 to 36) and
-// bit size (0 to 64) and returns the corresponding value i.
+// ParseInt 返回字符串表示的整数值，接受正负号。
 //
-// If the base argument is 0, the true base is implied by the string's
-// prefix: 2 for "0b", 8 for "0" or "0o", 16 for "0x", and 10 otherwise.
-// Also, for argument base 0 only, underscore characters are permitted
-// as defined by the Go syntax for integer literals.
+// 如果 base = 0，则自动判断字符串 s 前缀，"0b"表示二进制，"0"或"0o"表示八进制，"0x"表示十六进制，否则表示十进制。
+// 同时，当 base = 0时，允许使用下划线（下划线必须位于进制前缀与数字之间或在数字之间）。
 //
-// The bitSize argument specifies the integer type
-// that the result must fit into. Bit sizes 0, 8, 16, 32, and 64
-// correspond to int, int8, int16, int32, and int64.
-// If bitSize is below 0 or above 64, an error is returned.
+// bitSize 必须设置无溢出赋值的整数类型，0、8、16、32、64 分别代表 int、int8、int16、int32、int64。
+// 如果 bitSize 小于 0 或大于 64 将返回错误。
 //
-// The errors that ParseInt returns have concrete type *NumError
-// and include err.Num = s. If s is empty or contains invalid
-// digits, err.Err = ErrSyntax and the returned value is 0;
-// if the value corresponding to s cannot be represented by a
-// signed integer of the given size, err.Err = ErrRange and the
-// returned value is the maximum magnitude integer of the
-// appropriate bitSize and sign.
+// ParseInt 返回的错误类型为 *NumErr，其中 err.Num = s。
+// 如果 s 语法错误，err.Err = ErrSyntax 并返回 0 值。
+// 如果 s 表示的数字超出类型范围，err.Err = ErrRange，返回类型对应最大值。
 func ParseInt(s string, base int, bitSize int) (i int64, err error) {
 	const fnParseInt = "ParseInt"
 
@@ -220,7 +211,7 @@ func ParseInt(s string, base int, bitSize int) (i int64, err error) {
 	return n, nil
 }
 
-// Atoi is equivalent to ParseInt(s, 10, 0), converted to type int.
+// Atoi 是 ParseInt(s, 10, 0) 的简写。
 func Atoi(s string) (int, error) {
 	const fnAtoi = "Atoi"
 

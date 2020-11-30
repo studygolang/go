@@ -655,30 +655,24 @@ func atof64(s string) (f float64, n int, err error) {
 	return f, n, err
 }
 
-// ParseFloat converts the string s to a floating-point number
-// with the precision specified by bitSize: 32 for float32, or 64 for float64.
-// When bitSize=32, the result still has type float64, but it will be
-// convertible to float32 without changing its value.
+// ParseFloat 将字符串 s 转换为浮点数。
+// 通过指定 bitSize 大小设置精度：32 表示 float32，64 表示float64。
+// 当 bitSize = 32 时，返回结果类型任然时 float64，但可以无损的转换为 float32。
 //
-// ParseFloat accepts decimal and hexadecimal floating-point number syntax.
-// If s is well-formed and near a valid floating-point number,
-// ParseFloat returns the nearest floating-point number rounded
-// using IEEE754 unbiased rounding.
-// (Parsing a hexadecimal floating-point value only rounds when
-// there are more bits in the hexadecimal representation than
-// will fit in the mantissa.)
+// ParseFloat 可接受十进制和十六进制的浮点数字符串转换。
+// 如果 s 符合规则且接近一个有效的浮点数，
+// ParseFloat 将返回使用 IEEE754 标准四舍五入的最近浮点数。
+//（解析十六进制浮点数时，只有在十六进制表示的数超过限定的位数时，才进行舍入）
 //
-// The errors that ParseFloat returns have concrete type *NumError
-// and include err.Num = s.
+// ParseFloat 返回的错误类型为 *NumError，其中 err.Num = s。
 //
-// If s is not syntactically well-formed, ParseFloat returns err.Err = ErrSyntax.
+// 如果字符串 s 不符合转换规则，
+// ParseFloat 返回的错误中 err.Err = ErrSyntax。
 //
-// If s is syntactically well-formed but is more than 1/2 ULP
-// away from the largest floating point number of the given size,
-// ParseFloat returns f = ±Inf, err.Err = ErrRange.
+// 如果 s 符合转换规则，但大于浮点数限定值 1/2 ULP 时，
+// ParseFloat 返回的错误中  f = ±Inf, err.Err = ErrRange。
 //
-// ParseFloat recognizes the strings "NaN", and the (possibly signed) strings "Inf" and "Infinity"
-// as their respective special floating point values. It ignores case when matching.
+// ParseFloat 将字符串 "NaN" 和(可能有符号的)字符串 "Inf" 和 "Infinity" 作为它们各自的特殊浮点值。它在匹配时忽略大小写。
 func ParseFloat(s string, bitSize int) (float64, error) {
 	f, n, err := parseFloatPrefix(s, bitSize)
 	if err == nil && n != len(s) {

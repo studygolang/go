@@ -6,8 +6,7 @@ package strconv
 
 const fnParseComplex = "ParseComplex"
 
-// convErr splits an error returned by parseFloatPrefix
-// into a syntax or range error for ParseComplex.
+// convErr 将 parseFloatPrefix 返回的错误转换为 ParseComplex 需要返回的错误（s 不匹配规则或实部、虚部超出范围）
 func convErr(err error, s string) (syntax, range_ error) {
 	if x, ok := err.(*NumError); ok {
 		x.Func = fnParseComplex
@@ -19,42 +18,37 @@ func convErr(err error, s string) (syntax, range_ error) {
 	return err, nil
 }
 
-// ParseComplex converts the string s to a complex number
-// with the precision specified by bitSize: 64 for complex64, or 128 for complex128.
-// When bitSize=64, the result still has type complex128, but it will be
-// convertible to complex64 without changing its value.
+// ParseComplex 返回字符串 s 表示的复数。
+// 使用 bitSize 设置复数精度：64 表示 complex64，128 表示 complex128。
+// 当 bitSize = 64 时，返回值类型依然为 complex128，但是可以在不改变值的情况下转换为 complex64
 //
-// The number represented by s must be of the form N, Ni, or N±Ni, where N stands
-// for a floating-point number as recognized by ParseFloat, and i is the imaginary
-// component. If the second N is unsigned, a + sign is required between the two components
-// as indicated by the ±. If the second N is NaN, only a + sign is accepted.
-// The form may be parenthesized and cannot contain any spaces.
-// The resulting complex number consists of the two components converted by ParseFloat.
+// s 表示的数必须是 N、Ni 或 N ± Ni 的形式，其中 N 为 ParseFloat 可以识别的浮点数，i 为虚部。
+// 如果第二个 N 是无符号的，则两个分量之间需要一个加号，用 ± 号表示。
+// 如果第二个 N 是 NaN，则只接受一个加号。
+// s 中可以包含括号但是不能包含空格.
+// 得到的复数是实部和虚部由 ParseFloat 转换得到的。
 //
-// The errors that ParseComplex returns have concrete type *NumError
-// and include err.Num = s.
+// ParseComplex 返回的错误类型是 *NumError，其中 err.Num = s。
+// 如果 s 表示的字符串不符合规则，那么 ParseComplex 返回的错误中 err.Err = ErrSyntax。
 //
-// If s is not syntactically well-formed, ParseComplex returns err.Err = ErrSyntax.
-//
-// If s is syntactically well-formed but either component is more than 1/2 ULP
-// away from the largest floating point number of the given component's size,
-// ParseComplex returns err.Err = ErrRange and c = ±Inf for the respective component.
+// 如果 s 表示的字符串符合规则，但是当 s 中实部或虚部的值大于指定浮点数限定值 1/2 ULP 时，
+// ParseComplex 返回的错误中 err.Err = ErrRange 和 c = ±Inf。
 func ParseComplex(s string, bitSize int) (complex128, error) {
 	size := 128
 	if bitSize == 64 {
-		size = 32 // complex64 uses float32 parts
+		size = 32 // complex64 使用 float32 表示复数的实部和虚部
 	}
 
 	orig := s
 
-	// Remove parentheses, if any.
+	// 删除括号
 	if len(s) >= 2 && s[0] == '(' && s[len(s)-1] == ')' {
 		s = s[1 : len(s)-1]
 	}
 
 	var pending error // pending range error, or nil
 
-	// Read real part (possibly imaginary part if followed by 'i').
+	// 读取实部（如果后面跟着 i，可能是虚部）
 	re, n, err := parseFloatPrefix(s, size)
 	if err != nil {
 		err, pending = convErr(err, orig)
@@ -64,23 +58,22 @@ func ParseComplex(s string, bitSize int) (complex128, error) {
 	}
 	s = s[n:]
 
-	// If we have nothing left, we're done.
+	// 如果没有了，结束
 	if len(s) == 0 {
 		return complex(re, 0), pending
 	}
 
-	// Otherwise, look at the next character.
+	// 否则，处理接下来的字符
 	switch s[0] {
 	case '+':
-		// Consume the '+' to avoid an error if we have "+NaNi", but
-		// do this only if we don't have a "++" (don't hide that error).
+		// 使用 '+' 避免 "+NaNi" 导致错误，但只有在没有 "++" 时才有效果
 		if len(s) > 1 && s[1] != '+' {
 			s = s[1:]
 		}
 	case '-':
 		// ok
 	case 'i':
-		// If 'i' is the last character, we only have an imaginary part.
+		// 如果 'i' 是最后一个字符，那么该复数只有虚部
 		if len(s) == 1 {
 			return complex(0, re), pending
 		}
@@ -89,7 +82,7 @@ func ParseComplex(s string, bitSize int) (complex128, error) {
 		return 0, syntaxError(fnParseComplex, orig)
 	}
 
-	// Read imaginary part.
+	// 读取虚部
 	im, n, err := parseFloatPrefix(s, size)
 	if err != nil {
 		err, pending = convErr(err, orig)
