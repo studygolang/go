@@ -18,7 +18,7 @@ func ExampleDecodeLastRune() {
 
 		b = b[:len(b)-size]
 	}
-	// Output:
+	// 输出：
 	// 界 3
 	// 世 3
 	//   1
@@ -39,7 +39,7 @@ func ExampleDecodeLastRuneInString() {
 
 		str = str[:len(str)-size]
 	}
-	// Output:
+	// 输出：
 	// 界 3
 	// 世 3
 	//   1
@@ -61,7 +61,7 @@ func ExampleDecodeRune() {
 
 		b = b[size:]
 	}
-	// Output:
+	// 输出：
 	// H 1
 	// e 1
 	// l 1
@@ -82,7 +82,7 @@ func ExampleDecodeRuneInString() {
 
 		str = str[size:]
 	}
-	// Output:
+	// 输出：
 	// H 1
 	// e 1
 	// l 1
@@ -102,7 +102,7 @@ func ExampleEncodeRune() {
 
 	fmt.Println(buf)
 	fmt.Println(n)
-	// Output:
+	// 输出：
 	// [228 184 150]
 	// 3
 }
@@ -111,7 +111,7 @@ func ExampleFullRune() {
 	buf := []byte{228, 184, 150} // 世
 	fmt.Println(utf8.FullRune(buf))
 	fmt.Println(utf8.FullRune(buf[:2]))
-	// Output:
+	// 输出：
 	// true
 	// false
 }
@@ -120,7 +120,7 @@ func ExampleFullRuneInString() {
 	str := "世"
 	fmt.Println(utf8.FullRuneInString(str))
 	fmt.Println(utf8.FullRuneInString(str[:2]))
-	// Output:
+	// 输出：
 	// true
 	// false
 }
@@ -129,7 +129,7 @@ func ExampleRuneCount() {
 	buf := []byte("Hello, 世界")
 	fmt.Println("bytes =", len(buf))
 	fmt.Println("runes =", utf8.RuneCount(buf))
-	// Output:
+	// 输出：
 	// bytes = 13
 	// runes = 9
 }
@@ -138,7 +138,7 @@ func ExampleRuneCountInString() {
 	str := "Hello, 世界"
 	fmt.Println("bytes =", len(str))
 	fmt.Println("runes =", utf8.RuneCountInString(str))
-	// Output:
+	// 输出：
 	// bytes = 13
 	// runes = 9
 }
@@ -146,7 +146,7 @@ func ExampleRuneCountInString() {
 func ExampleRuneLen() {
 	fmt.Println(utf8.RuneLen('a'))
 	fmt.Println(utf8.RuneLen('界'))
-	// Output:
+	// 输出：
 	// 1
 	// 3
 }
@@ -156,7 +156,7 @@ func ExampleRuneStart() {
 	fmt.Println(utf8.RuneStart(buf[0]))
 	fmt.Println(utf8.RuneStart(buf[1]))
 	fmt.Println(utf8.RuneStart(buf[2]))
-	// Output:
+	// 输出：
 	// true
 	// true
 	// false
@@ -168,7 +168,7 @@ func ExampleValid() {
 
 	fmt.Println(utf8.Valid(valid))
 	fmt.Println(utf8.Valid(invalid))
-	// Output:
+	// 输出：
 	// true
 	// false
 }
@@ -179,7 +179,7 @@ func ExampleValidRune() {
 
 	fmt.Println(utf8.ValidRune(valid))
 	fmt.Println(utf8.ValidRune(invalid))
-	// Output:
+	// 输出：
 	// true
 	// false
 }
@@ -190,7 +190,7 @@ func ExampleValidString() {
 
 	fmt.Println(utf8.ValidString(valid))
 	fmt.Println(utf8.ValidString(invalid))
-	// Output:
+	// 输出：
 	// true
 	// false
 }

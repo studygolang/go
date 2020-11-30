@@ -83,7 +83,7 @@ var inPropTest = []T{
 	{0x300D, "Quotation_Mark"},
 	{0x2EF3, "Radical"},
 	{0x1f1ff, "Regional_Indicator"},
-	{0x061F, "STerm"}, // Deprecated alias of Sentence_Terminal
+	{0x061F, "STerm"}, // Sentence_Terminal 已弃用的别名。
 	{0x061F, "Sentence_Terminal"},
 	{0x2071, "Soft_Dotted"},
 	{0x003A, "Terminal_Punctuation"},

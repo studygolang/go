@@ -4,7 +4,7 @@
 
 package utf16
 
-// Extra names for constants so we can validate them during testing.
+// 常量的额外名称，以便可以在测试中对其进行验证。
 const (
 	MaxRune         = maxRune
 	ReplacementChar = replacementChar

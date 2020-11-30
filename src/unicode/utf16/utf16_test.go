@@ -11,7 +11,7 @@ import (
 	. "unicode/utf16"
 )
 
-// Validate the constants redefined from unicode.
+// 验证 unicode 重定义的常量。
 func TestConstants(t *testing.T) {
 	if MaxRune != unicode.MaxRune {
 		t.Errorf("utf16.maxRune is wrong: %x should be %x", MaxRune, unicode.MaxRune)
@@ -108,7 +108,7 @@ var decodeRuneTests = []struct {
 	{0xd800, 0xdc01, 0x10001},
 	{0xd808, 0xdf45, 0x12345},
 	{0xdbff, 0xdfff, 0x10ffff},
-	{0xd800, 'a', 0xfffd}, // illegal, replacement rune substituted
+	{0xd800, 'a', 0xfffd}, // 非法，占位码点被替换。
 }
 
 func TestDecodeRune(t *testing.T) {
@@ -124,7 +124,7 @@ var surrogateTests = []struct {
 	r    rune
 	want bool
 }{
-	// from https://en.wikipedia.org/wiki/UTF-16
+	// 来自 https://en.wikipedia.org/wiki/UTF-16
 	{'\u007A', false},     // LATIN SMALL LETTER Z
 	{'\u6C34', false},     // CJK UNIFIED IDEOGRAPH-6C34 (water)
 	{'\uFEFF', false},     // Byte Order Mark

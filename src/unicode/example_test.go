@@ -9,11 +9,10 @@ import (
 	"unicode"
 )
 
-// Functions starting with "Is" can be used to inspect which table of range a
-// rune belongs to. Note that runes may fit into more than one range.
+// 以 Is 开头的函数可用于检查码点属于哪个范围表。注意，码点可能符合多个范围。
 func Example_is() {
 
-	// constant with mixed type runes
+	// 带又混合类型码点的常量。
 	const mixed = "\b5Ὂg̀9! ℃ᾭG"
 	for _, c := range mixed {
 		fmt.Printf("For %q:\n", c)
@@ -61,56 +60,56 @@ func Example_is() {
 		}
 	}
 
-	// Output:
+	// 输出：
 	// For '\b':
-	// 	is control rune
-	// 	is not printable rune
+	// 	控制码点
+	// 	不可打印码点
 	// For '5':
-	// 	is digit rune
-	// 	is graphic rune
-	// 	is number rune
-	// 	is printable rune
+	// 	数字码点
+	// 	图形码点
+	// 	数字码点
+	// 	可打印码点
 	// For 'Ὂ':
-	// 	is graphic rune
-	// 	is letter rune
-	// 	is printable rune
-	// 	is upper case rune
+	// 	图形码点
+	// 	字符码点
+	// 	可打印码点
+	// 	大写码点
 	// For 'g':
-	// 	is graphic rune
-	// 	is letter rune
-	// 	is lower case rune
-	// 	is printable rune
+	// 	图形码点
+	// 	字母码点
+	// 	小写码点
+	// 	可打印码点
 	// For '̀':
-	// 	is graphic rune
-	// 	is mark rune
-	// 	is printable rune
+	// 	图形码点
+	// 	mark 码点
+	// 	可打印码点
 	// For '9':
-	// 	is digit rune
-	// 	is graphic rune
-	// 	is number rune
-	// 	is printable rune
+	// 	十进制码点
+	// 	图形码点
+	// 	数字码点
+	// 	可打印码点
 	// For '!':
-	// 	is graphic rune
-	// 	is printable rune
-	// 	is punct rune
+	// 	图形码点
+	// 	可打印码点
+	// 	标点符号点
 	// For ' ':
-	// 	is graphic rune
-	// 	is printable rune
-	// 	is space rune
+	// 	图形码点
+	// 	可打印码点
+	// 	空格码点
 	// For '℃':
-	// 	is graphic rune
-	// 	is printable rune
-	// 	is symbol rune
+	// 	图形码点
+	// 	可打印码点
+	// 	符号码点
 	// For 'ᾭ':
-	// 	is graphic rune
-	// 	is letter rune
-	// 	is printable rune
-	// 	is title case rune
+	// 	图形码点
+	// 	字母码点
+	// 	可打印码点
+	// 	首字母大写码点
 	// For 'G':
-	// 	is graphic rune
-	// 	is letter rune
-	// 	is printable rune
-	// 	is upper case rune
+	// 	图形码点
+	// 	字母码点
+	// 	可打印码点
+	// 	大写码点
 }
 
 func ExampleSimpleFold() {
@@ -121,7 +120,7 @@ func ExampleSimpleFold() {
 	fmt.Printf("%#U\n", unicode.SimpleFold('\u212A')) // 'K'
 	fmt.Printf("%#U\n", unicode.SimpleFold('1'))      // '1'
 
-	// Output:
+	// 输出：
 	// U+0061 'a'
 	// U+0041 'A'
 	// U+006B 'k'
@@ -141,7 +140,7 @@ func ExampleTo() {
 	fmt.Printf("%#U\n", unicode.To(unicode.LowerCase, ucG))
 	fmt.Printf("%#U\n", unicode.To(unicode.TitleCase, ucG))
 
-	// Output:
+	// 输出：
 	// U+0047 'G'
 	// U+0067 'g'
 	// U+0047 'G'
@@ -154,14 +153,14 @@ func ExampleToLower() {
 	const ucG = 'G'
 	fmt.Printf("%#U\n", unicode.ToLower(ucG))
 
-	// Output:
+	// 输出：
 	// U+0067 'g'
 }
 func ExampleToTitle() {
 	const ucG = 'g'
 	fmt.Printf("%#U\n", unicode.ToTitle(ucG))
 
-	// Output:
+	// 输出：
 	// U+0047 'G'
 }
 
@@ -169,7 +168,7 @@ func ExampleToUpper() {
 	const ucG = 'g'
 	fmt.Printf("%#U\n", unicode.ToUpper(ucG))
 
-	// Output:
+	// 输出：
 	// U+0047 'G'
 }
 
@@ -186,7 +185,7 @@ func ExampleSpecialCase() {
 	fmt.Printf("%#U\n", t.ToTitle(uci))
 	fmt.Printf("%#U\n", t.ToUpper(uci))
 
-	// Output:
+	// 输出：
 	// U+0069 'i'
 	// U+0130 'İ'
 	// U+0130 'İ'

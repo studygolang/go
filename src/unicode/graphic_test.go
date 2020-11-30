@@ -9,8 +9,7 @@ import (
 	. "unicode"
 )
 
-// Independently check that the special "Is" functions work
-// in the Latin-1 range through the property table.
+// 通过属性表单独检查 Is 函数是否在 Latin-1 范围内起作用。
 
 func TestIsControlLatin1(t *testing.T) {
 	for i := rune(0); i <= MaxLatin1; i++ {

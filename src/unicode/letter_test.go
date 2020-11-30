@@ -100,7 +100,7 @@ var notletterTest = []rune{
 	0x10ffff,
 }
 
-// Contains all the special cased Latin-1 chars.
+// 包含 Latin-1 中所有特殊大小写的字符。
 var spaceTest = []rune{
 	0x09,
 	0x0a,
@@ -125,7 +125,7 @@ var caseTest = []caseT{
 	{UpperCase, -1, -1},
 	{UpperCase, 1 << 30, 1 << 30},
 
-	// ASCII (special-cased so test carefully)
+	// ASCII (特殊大小写，所以测试要谨慎)
 	{UpperCase, '\n', '\n'},
 	{UpperCase, 'a', 'A'},
 	{UpperCase, 'A', 'A'},
@@ -139,7 +139,7 @@ var caseTest = []caseT{
 	{TitleCase, 'A', 'A'},
 	{TitleCase, '7', '7'},
 
-	// Latin-1: easy to read the tests!
+	// Latin-1: 易于阅读的测试！
 	{UpperCase, 0x80, 0x80},
 	{UpperCase, 'Å', 'Å'},
 	{UpperCase, 'å', 'Å'},
@@ -165,7 +165,7 @@ var caseTest = []caseT{
 	{LowerCase, 0x212A, 'k'},
 	{TitleCase, 0x212A, 0x212A},
 
-	// From an UpperLower sequence
+	// 来自一 UpperLower 序列。
 	// A640;CYRILLIC CAPITAL LETTER ZEMLYA;Lu;0;L;;;;;N;;;;A641;
 	{UpperCase, 0xA640, 0xA640},
 	{LowerCase, 0xA640, 0xA641},
@@ -183,7 +183,7 @@ var caseTest = []caseT{
 	{LowerCase, 0xA65F, 0xA65F},
 	{TitleCase, 0xA65F, 0xA65E},
 
-	// From another UpperLower sequence
+	// 来自另一 UpperLower 序列。
 	// 0139;LATIN CAPITAL LETTER L WITH ACUTE;Lu;0;L;004C 0301;;;;N;LATIN CAPITAL LETTER L ACUTE;;;013A;
 	{UpperCase, 0x0139, 0x0139},
 	{LowerCase, 0x0139, 0x013A},
@@ -197,7 +197,7 @@ var caseTest = []caseT{
 	{LowerCase, 0x0148, 0x0148},
 	{TitleCase, 0x0148, 0x0147},
 
-	// Lowercase lower than uppercase.
+	// Lowercase 小于 uppercase。
 	// AB78;CHEROKEE SMALL LETTER GE;Ll;0;L;;;;;N;;;13A8;;13A8
 	{UpperCase, 0xab78, 0x13a8},
 	{LowerCase, 0xab78, 0xab78},
@@ -206,7 +206,7 @@ var caseTest = []caseT{
 	{LowerCase, 0x13a8, 0xab78},
 	{TitleCase, 0x13a8, 0x13a8},
 
-	// Last block in the 5.1.0 table
+	// 表 5.1.0 的最后一块。
 	// 10400;DESERET CAPITAL LETTER LONG I;Lu;0;L;;;;;N;;;;10428;
 	{UpperCase, 0x10400, 0x10400},
 	{LowerCase, 0x10400, 0x10428},
@@ -224,7 +224,7 @@ var caseTest = []caseT{
 	{LowerCase, 0x1044F, 0x1044F},
 	{TitleCase, 0x1044F, 0x10427},
 
-	// First one not in the 5.1.0 table
+	// 不在表 5.1.0中的第一个。
 	// 10450;SHAVIAN LETTER PEEP;Lo;0;L;;;;;N;;;;;
 	{UpperCase, 0x10450, 0x10450},
 	{LowerCase, 0x10450, 0x10450},
@@ -341,8 +341,7 @@ func TestIsSpace(t *testing.T) {
 	}
 }
 
-// Check that the optimizations for IsLetter etc. agree with the tables.
-// We only need to check the Latin-1 range.
+// 检查对 IsLetter 等的优化与表是否一致，只需检查 Latin-1 范围。
 func TestLetterOptimizations(t *testing.T) {
 	for i := rune(0); i <= MaxLatin1; i++ {
 		if Is(Letter, i) != IsLetter(i) {
@@ -399,22 +398,21 @@ func TestTurkishCase(t *testing.T) {
 }
 
 var simpleFoldTests = []string{
-	// SimpleFold(x) returns the next equivalent rune > x or wraps
-	// around to smaller values.
+	// SimpleFold(x) 返回下一个等效的 rune > x 或 最小值附近的 wraps。
 
-	// Easy cases.
+	// 简单的大小写。
 	"Aa",
 	"δΔ",
 
-	// ASCII special cases.
+	// 特殊的 ASCII 大小写。
 	"KkK",
 	"Ssſ",
 
-	// Non-ASCII special cases.
+	// 非 ASCII 大小写。
 	"ρϱΡ",
 	"ͅΙιι",
 
-	// Extra special cases: has lower/upper but no case fold.
+	// 额外的特殊大小写：有大小写但无折叠。
 	"İ",
 	"ı",
 
@@ -439,15 +437,8 @@ func TestSimpleFold(t *testing.T) {
 	}
 }
 
-// Running 'go test -calibrate' runs the calibration to find a plausible
-// cutoff point for linear search of a range list vs. binary search.
-// We create a fake table and then time how long it takes to do a
-// sequence of searches within that table, for all possible inputs
-// relative to the ranges (something before all, in each, between each, after all).
-// This assumes that all possible runes are equally likely.
-// In practice most runes are ASCII so this is a conservative estimate
-// of an effective cutoff value. In practice we could probably set it higher
-// than what this function recommends.
+// 运行 go test -calibrate 以找到线性查找和二分查找在列表查找任务上合理的截止点。
+// 创建一个伪表，然后计算在该表内进行一系列各种输入范围值的查找所花费的时间。该任务假设所有码点都是一样的，实际上，大多数码点都是 ASCII 值。因此这是截止点的保守估计。实际上，可以将其设置为高于此函数建议的值。
 
 var calibrate = flag.Bool("calibrate", false, "compute crossover for linear vs. binary search")
 
@@ -460,10 +451,8 @@ func TestCalibrate(t *testing.T) {
 		fmt.Printf("warning: running calibration on %s\n", runtime.GOARCH)
 	}
 
-	// Find the point where binary search wins by more than 10%.
-	// The 10% bias gives linear search an edge when they're close,
-	// because on predominantly ASCII inputs linear search is even
-	// better than our benchmarks measure.
+	// 找到超过二分查找性能10%的点。
+	// 10%的偏差使得线性搜索在接近目标时更有优势，因为输入主要是 ASCII 值，线性搜索甚至比基准测试还要好。
 	n := sort.Search(64, func(n int) bool {
 		tab := fakeTable(n)
 		blinear := func(b *testing.B) {
@@ -514,7 +503,7 @@ func linear(ranges []Range16, r uint16) bool {
 }
 
 func binary(ranges []Range16, r uint16) bool {
-	// binary search over ranges
+	// 在 ranges 上进行二分查找。
 	lo := 0
 	hi := len(ranges)
 	for lo < hi {
@@ -555,7 +544,7 @@ func TestLatinOffset(t *testing.T) {
 
 func TestSpecialCaseNoMapping(t *testing.T) {
 	// Issue 25636
-	// no change for rune 'A', zero delta, under upper/lower/title case change.
+	// 在大写，小写，首字母大小写改变的情况下，码点'A'无变化。
 	var noChangeForCapitalA = CaseRange{'A', 'A', [MaxCase]rune{0, 0, 0}}
 	got := strings.ToLowerSpecial(SpecialCase([]CaseRange{noChangeForCapitalA}), "ABC")
 	want := "Abc"

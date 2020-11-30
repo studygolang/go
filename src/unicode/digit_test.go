@@ -116,7 +116,7 @@ func TestDigit(t *testing.T) {
 	}
 }
 
-// Test that the special case in IsDigit agrees with the table
+// 测试 IsDigit 中的特殊情况是否与表一致。
 func TestDigitOptimization(t *testing.T) {
 	for i := rune(0); i <= MaxLatin1; i++ {
 		if Is(Digit, i) != IsDigit(i) {
