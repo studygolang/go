@@ -8,34 +8,27 @@ import (
 	"sync/atomic"
 )
 
-// Once is an object that will perform exactly one action.
+// Once 一个对象只会执行一次.
 type Once struct {
-	// done indicates whether the action has been performed.
-	// It is first in the struct because it is used in the hot path.
-	// The hot path is inlined at every call site.
-	// Placing done first allows more compact instructions on some architectures (amd64/x86),
-	// and fewer instructions (to calculate offset) on other architectures.
+	// done 表示是否已经执行过.
 	done uint32
 	m    Mutex
 }
 
-// Do calls the function f if and only if Do is being called for the
-// first time for this instance of Once. In other words, given
-// 	var once Once
-// if once.Do(f) is called multiple times, only the first call will invoke f,
-// even if f has a different value in each invocation. A new instance of
-// Once is required for each function to execute.
+// 只有在首次支持 Once 的这个实例的是，才会去出发响应的函数
+// 换种说法, 定义一个	var once Once
+// 如果 once.Do(f)被多次调用, 即使f每次都有不一样的值，只有第一次会取调用函数 f。
+// 如果要调用不同的f，需要给不同的f分配不同的Once实例，
+// 每个Once实例只会被调用一次.
 //
-// Do is intended for initialization that must be run exactly once. Since f
-// is niladic, it may be necessary to use a function literal to capture the
-// arguments to a function to be invoked by Do:
+// Do 只会在初始化时运行一次. 由于 f 是一个无参函数
+// 因此可能需要通过函数的变量来传递参数，类似如下:
 // 	config.once.Do(func() { config.init(filename) })
 //
-// Because no call to Do returns until the one call to f returns, if f causes
-// Do to be called, it will deadlock.
+// 注意不要在Do的f中再次去调用Do，否则将造成死锁.
 //
-// If f panics, Do considers it to have returned; future calls of Do return
-// without calling f.
+// 如果 f panic, Do 也会认为已经返回了
+// 后续再对Do的调用不会去调用f.
 //
 func (o *Once) Do(f func()) {
 	// Note: Here is an incorrect implementation of Do:

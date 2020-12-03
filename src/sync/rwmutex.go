@@ -10,36 +10,31 @@ import (
 	"unsafe"
 )
 
-// There is a modified copy of this file in runtime/rwmutex.go.
-// If you make any changes here, see if you should make them there.
+// 该文件有一个修改后的副本在 runtime/rwmutex.go.
+// 如果你在这里做了任何的修改，应该检查是否需要修改上面提到的副本中的文件.
 
-// A RWMutex is a reader/writer mutual exclusion lock.
-// The lock can be held by an arbitrary number of readers or a single writer.
-// The zero value for a RWMutex is an unlocked mutex.
+// RWMutex 是一个 读/写 互斥锁.
+// 读写锁支持多个reader读取或者一个writer去写.
+// RWMutex 的零值时一个未加锁的互斥锁.
 //
-// A RWMutex must not be copied after first use.
+// RWMutex 使用后禁止复制.
 //
-// If a goroutine holds a RWMutex for reading and another goroutine might
-// call Lock, no goroutine should expect to be able to acquire a read lock
-// until the initial read lock is released. In particular, this prohibits
-// recursive read locking. This is to ensure that the lock eventually becomes
-// available; a blocked Lock call excludes new readers from acquiring the
-// lock.
+// 如果goroutine拥有 RWMutex 进行读取，并且另外一个goroutine调用Lock
+// 在释放初始化读取锁之前，任何goroutine都不会获取到读取锁
+// 为了确保最终锁的可用，禁止递归调用读取锁.
 type RWMutex struct {
-	w           Mutex  // held if there are pending writers
-	writerSem   uint32 // semaphore for writers to wait for completing readers
-	readerSem   uint32 // semaphore for readers to wait for completing writers
-	readerCount int32  // number of pending readers
-	readerWait  int32  // number of departing readers
+	w           Mutex  // writer的互斥锁
+	writerSem   uint32 // writer的信号量
+	readerSem   uint32 // reader的信号量
+	readerCount int32  // reader的数量
+	readerWait  int32  // 进行write需要等待的reader数量
 }
 
 const rwmutexMaxReaders = 1 << 30
 
-// RLock locks rw for reading.
+// RLock 读取锁锁定.
 //
-// It should not be used for recursive read locking; a blocked Lock
-// call excludes new readers from acquiring the lock. See the
-// documentation on the RWMutex type.
+// 禁止递归调用
 func (rw *RWMutex) RLock() {
 	if race.Enabled {
 		_ = rw.w.state
@@ -55,10 +50,9 @@ func (rw *RWMutex) RLock() {
 	}
 }
 
-// RUnlock undoes a single RLock call;
-// it does not affect other simultaneous readers.
-// It is a run-time error if rw is not locked for reading
-// on entry to RUnlock.
+// RUnlock 解锁一个RLock锁定的锁;
+// 它不会影响同时并发读的其他goroutine.
+// 如果取解锁一个没有锁定的锁，会导致报错.
 func (rw *RWMutex) RUnlock() {
 	if race.Enabled {
 		_ = rw.w.state
@@ -86,9 +80,9 @@ func (rw *RWMutex) rUnlockSlow(r int32) {
 	}
 }
 
-// Lock locks rw for writing.
-// If the lock is already locked for reading or writing,
-// Lock blocks until the lock is available.
+// Lock 锁定一个写锁.
+// 如果已经被锁定读取或者写入,
+// Lock 会阻塞直到锁可用.
 func (rw *RWMutex) Lock() {
 	if race.Enabled {
 		_ = rw.w.state
@@ -109,12 +103,11 @@ func (rw *RWMutex) Lock() {
 	}
 }
 
-// Unlock unlocks rw for writing. It is a run-time error if rw is
-// not locked for writing on entry to Unlock.
+// Unlock 解锁一个写入锁.
+// 如果解锁一个没有锁定的写入锁，会导致报错.
 //
-// As with Mutexes, a locked RWMutex is not associated with a particular
-// goroutine. One goroutine may RLock (Lock) a RWMutex and then
-// arrange for another goroutine to RUnlock (Unlock) it.
+// 和Mutex一样，RWMutex也是不与goroutine绑定的
+// 可以是不同的goroutine分别进行加锁和解锁的操作.
 func (rw *RWMutex) Unlock() {
 	if race.Enabled {
 		_ = rw.w.state
@@ -139,8 +132,7 @@ func (rw *RWMutex) Unlock() {
 	}
 }
 
-// RLocker returns a Locker interface that implements
-// the Lock and Unlock methods by calling rw.RLock and rw.RUnlock.
+// RLocker 返回一个Locker接口的读锁的加解锁实现.
 func (rw *RWMutex) RLocker() Locker {
 	return (*rlocker)(rw)
 }

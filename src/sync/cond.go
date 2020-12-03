@@ -9,38 +9,34 @@ import (
 	"unsafe"
 )
 
-// Cond implements a condition variable, a rendezvous point
-// for goroutines waiting for or announcing the occurrence
-// of an event.
+// Cond 实现了一个条件变量
+// 是goroutines等待或宣布事件触发的集合
 //
-// Each Cond has an associated Locker L (often a *Mutex or *RWMutex),
-// which must be held when changing the condition and
-// when calling the Wait method.
+// 每个 Cond 都有一个关联的锁 L (一般是一个 *Mutex 或 *RWMutex),
+// 当去调用Wait方法以及修改条件变量的时候必须持有锁
 //
-// A Cond must not be copied after first use.
+// Cond在第一次使用后就不能再复制
 type Cond struct {
 	noCopy noCopy
 
-	// L is held while observing or changing the condition
+	// 使用Cond的时候必须持有这个锁
 	L Locker
 
 	notify  notifyList
 	checker copyChecker
 }
 
-// NewCond returns a new Cond with Locker l.
+// NewCond 使用传入的l锁新的Cond
 func NewCond(l Locker) *Cond {
 	return &Cond{L: l}
 }
 
-// Wait atomically unlocks c.L and suspends execution
-// of the calling goroutine. After later resuming execution,
-// Wait locks c.L before returning. Unlike in other systems,
-// Wait cannot return unless awoken by Broadcast or Signal.
+// Wait 解锁c.L 并暂停goroutine的执行。
+// 等待被唤醒后恢复执行，并重新锁定 c.L
+// 与其他系统不同，等待不能返回，除非被广播或信号唤醒。
 //
-// Because c.L is not locked when Wait first resumes, the caller
-// typically cannot assume that the condition is true when
-// Wait returns. Instead, the caller should Wait in a loop:
+// 因为第一次恢复的时候c.L并未锁定，调用者一般不能认为条件为真。
+// 应该在循环中等待,并持续的判断调试是否为真
 //
 //    c.L.Lock()
 //    for !condition() {
@@ -57,25 +53,23 @@ func (c *Cond) Wait() {
 	c.L.Lock()
 }
 
-// Signal wakes one goroutine waiting on c, if there is any.
+// Signal 如果有正在等待的goroutine，会唤醒一个.
 //
-// It is allowed but not required for the caller to hold c.L
-// during the call.
+// 调用该方法的时候不需要持有c.L这个锁
 func (c *Cond) Signal() {
 	c.checker.check()
 	runtime_notifyListNotifyOne(&c.notify)
 }
 
-// Broadcast wakes all goroutines waiting on c.
+// Broadcast 唤醒所有等待Cond的goroutine.
 //
-// It is allowed but not required for the caller to hold c.L
-// during the call.
+// 调用该方法的时候不需要持有c.L这个锁
 func (c *Cond) Broadcast() {
 	c.checker.check()
 	runtime_notifyListNotifyAll(&c.notify)
 }
 
-// copyChecker holds back pointer to itself to detect object copying.
+// copyChecker 检测是否被复制.
 type copyChecker uintptr
 
 func (c *copyChecker) check() {
@@ -86,13 +80,12 @@ func (c *copyChecker) check() {
 	}
 }
 
-// noCopy may be embedded into structs which must not be copied
-// after the first use.
+// noCopy 用来嵌入到struct中使用
+// 禁止第一次使用后再次被复制使用
 //
-// See https://golang.org/issues/8005#issuecomment-190753527
-// for details.
+// 详情参考 https://golang.org/issues/8005#issuecomment-190753527
 type noCopy struct{}
 
-// Lock is a no-op used by -copylocks checker from `go vet`.
+// Lock  是`go vet`命令用来做检查用的，防止使用后再次复制.
 func (*noCopy) Lock()   {}
 func (*noCopy) Unlock() {}

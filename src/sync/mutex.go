@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package sync provides basic synchronization primitives such as mutual
-// exclusion locks. Other than the Once and WaitGroup types, most are intended
-// for use by low-level library routines. Higher-level synchronization is
-// better done via channels and communication.
+// sync包提供了基本的同步原语，比如排它锁 
+// 除了 Once 和 WaitGroup 类型, most are intended
+// 大部分的类型都是为底层并发使用的. 
+// 在实际的业务中更推荐使用Channel来进行并发控制.
 //
-// Values containing the types defined in this package should not be copied.
+// 在此包中定义的所有类型的值都不能复制
 package sync
 
 import (
@@ -18,65 +18,62 @@ import (
 
 func throw(string) // provided by runtime
 
-// A Mutex is a mutual exclusion lock.
-// The zero value for a Mutex is an unlocked mutex.
+// Mutex 是一个互斥锁.
+// Mutex 的零值是一个未锁定的Mutex.
 //
-// A Mutex must not be copied after first use.
+// Mutex 在使用后，禁止复制.
 type Mutex struct {
 	state int32
 	sema  uint32
 }
 
-// A Locker represents an object that can be locked and unlocked.
+// Locker 代表一个可以锁定和解锁的对象.
 type Locker interface {
 	Lock()
 	Unlock()
 }
 
 const (
-	mutexLocked = 1 << iota // mutex is locked
+	mutexLocked = 1 << iota // mutex 锁定的值
 	mutexWoken
 	mutexStarving
 	mutexWaiterShift = iota
 
 	// Mutex fairness.
 	//
-	// Mutex can be in 2 modes of operations: normal and starvation.
-	// In normal mode waiters are queued in FIFO order, but a woken up waiter
-	// does not own the mutex and competes with new arriving goroutines over
-	// the ownership. New arriving goroutines have an advantage -- they are
-	// already running on CPU and there can be lots of them, so a woken up
-	// waiter has good chances of losing. In such case it is queued at front
-	// of the wait queue. If a waiter fails to acquire the mutex for more than 1ms,
-	// it switches mutex to the starvation mode.
+	// Mutex 有两种模式: 正常模式和饥饿模式.
+	// 正常模式下， waiter 在一个先进先出的的队列中, 
+	// 但是被唤醒的goroutine不会直接拥有锁，需要和新来的goroutine进行竞争. 
+	// 新来的goroutine优先级更高,因为他已经运行在CPU上了，所以唤醒的waiter大概率会输
+	// 然后被唤醒的goroutine会被放到队列的最前面
+	// 如果一个waiter超过1ms都没有获取到锁,
+	// 那么mutex会进入到饥饿模式.
 	//
-	// In starvation mode ownership of the mutex is directly handed off from
-	// the unlocking goroutine to the waiter at the front of the queue.
-	// New arriving goroutines don't try to acquire the mutex even if it appears
-	// to be unlocked, and don't try to spin. Instead they queue themselves at
-	// the tail of the wait queue.
+	// 在饥饿模式下，队列中的goroutine直接获取到锁的拥有权
+	// 新到的goroutine即使发现是未锁定的状态，也不会去获取锁,也不会去自旋. 
+	// 然后它会加入到队列的尾部.
 	//
-	// If a waiter receives ownership of the mutex and sees that either
-	// (1) it is the last waiter in the queue, or (2) it waited for less than 1 ms,
-	// it switches mutex back to normal operation mode.
+	// 如果一个waiter持有锁后发现有一下两种情况之一
+	// (1) 当前waiter是队列中的最后一个 (2) 他等待的时间少于1ms,
+	// 那么会将mutex的模式改为正常模式.
 	//
-	// Normal mode has considerably better performance as a goroutine can acquire
-	// a mutex several times in a row even if there are blocked waiters.
-	// Starvation mode is important to prevent pathological cases of tail latency.
+	// 正常模式下，可以拥有更好的性能，即使有等待锁的waiter，goroutine也可以连续多次获取锁.
+	// 饥饿模式是对公平性和性能的平衡，可以避免过长的等待.
 	starvationThresholdNs = 1e6
 )
 
-// Lock locks m.
-// If the lock is already in use, the calling goroutine
-// blocks until the mutex is available.
+// Lock 锁定m.
+// 如果互斥锁处于锁定状态, 那么会阻塞点当前的线程
+// 知道这个互斥锁可以被锁定（即处于解锁状态）.
 func (m *Mutex) Lock() {
-	// Fast path: grab unlocked mutex.
+	// 快速方式: mutex没有被锁定.
 	if atomic.CompareAndSwapInt32(&m.state, 0, mutexLocked) {
 		if race.Enabled {
 			race.Acquire(unsafe.Pointer(m))
 		}
 		return
 	}
+	// 这里为什么要创建fast path和slowpath，是为了建立内联来得到优化，原文如下：
 	// Slow path (outlined so that the fast path can be inlined)
 	m.lockSlow()
 }
@@ -170,12 +167,11 @@ func (m *Mutex) lockSlow() {
 	}
 }
 
-// Unlock unlocks m.
-// It is a run-time error if m is not locked on entry to Unlock.
+// Unlock 释放锁.
+// 如果去释放一个没有被加锁的mutex会造成run-time报错.
 //
-// A locked Mutex is not associated with a particular goroutine.
-// It is allowed for one goroutine to lock a Mutex and then
-// arrange for another goroutine to unlock it.
+// Mutex 和goroutine没有绑定关系.
+// 可以使用一个goroutine去锁定，然后用另外的goroutine去解锁 .
 func (m *Mutex) Unlock() {
 	if race.Enabled {
 		_ = m.state
