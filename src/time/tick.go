@@ -6,25 +6,22 @@ package time
 
 import "errors"
 
-// A Ticker holds a channel that delivers `ticks' of a clock
-// at intervals.
+// Ticker 保管一个通道，并每隔一段时间向其传递"tick"。
 type Ticker struct {
-	C <-chan Time // The channel on which the ticks are delivered.
+	C <-chan Time // 传递 tick 的管道。
 	r runtimeTimer
 }
 
-// NewTicker returns a new Ticker containing a channel that will send the
-// time with a period specified by the duration argument.
-// It adjusts the intervals or drops ticks to make up for slow receivers.
-// The duration d must be greater than zero; if not, NewTicker will panic.
-// Stop the ticker to release associated resources.
+// NewTicker 返回一个新的 Ticker，该 Ticker 包含一个通道字段，并会每隔时间段d就向该通道发送当时的时间。
+// 它会调整时间间隔或者丢弃 tick 信息以适应反应慢的接收者。
+// 参数 d Duration 必须大于等于 0，否则 NewTicker 将会 panic。
+// 关闭该 Ticker 可以释放相关资源。
 func NewTicker(d Duration) *Ticker {
 	if d <= 0 {
 		panic(errors.New("non-positive interval for NewTicker"))
 	}
-	// Give the channel a 1-element time buffer.
-	// If the client falls behind while reading, we drop ticks
-	// on the floor until the client catches up.
+	// 给 channel 一个元素的时间缓冲区。
+	// 如果 client 读取缓慢, 我们将丢弃 ticker 直到 client 赶上来。
 	c := make(chan Time, 1)
 	t := &Ticker{
 		C: c,
@@ -39,9 +36,8 @@ func NewTicker(d Duration) *Ticker {
 	return t
 }
 
-// Stop turns off a ticker. After Stop, no more ticks will be sent.
-// Stop does not close the channel, to prevent a concurrent goroutine
-// reading from the channel from seeing an erroneous "tick".
+// Stop 关闭一个 ticker。 After Stop, no more ticks will be sent.
+// Stop 不会关闭 channel, 以防止并发的 goroutine 从 channel 中读取到错误的 tick。
 func (t *Ticker) Stop() {
 	stopTimer(&t.r)
 }

@@ -652,9 +652,9 @@ func (t Time) AppendFormat(b []byte, layout string) []byte {
 	return b
 }
 
-var errBad = errors.New("bad value for field") // placeholder not passed to user
+var errBad = errors.New("bad value for field") // 占位符未传递给用户
 
-// ParseError describes a problem parsing a time string.
+// ParseError 描述解析时间字符串时出现的问题。
 type ParseError struct {
 	Layout     string
 	Value      string
@@ -667,7 +667,7 @@ func quote(s string) string {
 	return "\"" + s + "\""
 }
 
-// Error returns the string representation of a ParseError.
+// Error 返回 ParseError 的字符串形式。
 func (e *ParseError) Error() string {
 	if e.Message == "" {
 		return "parsing time " +
@@ -680,7 +680,7 @@ func (e *ParseError) Error() string {
 		quote(e.Value) + e.Message
 }
 
-// isDigit reports whether s[i] is in range and is a decimal digit.
+// isDigit 报告 s[i] 是否在允许范围内并且是十进制数字。
 func isDigit(s string, i int) bool {
 	if len(s) <= i {
 		return false
@@ -689,9 +689,8 @@ func isDigit(s string, i int) bool {
 	return '0' <= c && c <= '9'
 }
 
-// getnum parses s[0:1] or s[0:2] (fixed forces s[0:2])
-// as a decimal integer and returns the integer and the
-// remainder of the string.
+// getnum 将 s[0:1] 或 s[0:2] (fixed forces s[0:2])
+// 解析为十进制数字，并返回该整数和字符串的其余部分。
 func getnum(s string, fixed bool) (int, string, error) {
 	if !isDigit(s, 0) {
 		return 0, s, errBad
@@ -705,9 +704,8 @@ func getnum(s string, fixed bool) (int, string, error) {
 	return int(s[0]-'0')*10 + int(s[1]-'0'), s[2:], nil
 }
 
-// getnum3 parses s[0:1], s[0:2], or s[0:3] (fixed forces s[0:3])
-// as a decimal integer and returns the integer and the remainder
-// of the string.
+// getnum3 将 s[0:1], s[0:2], 或 s[0:3] (fixed forces s[0:3])
+// 解析为十进制数字，并返回该整数和字符串的其余部分。
 func getnum3(s string, fixed bool) (int, string, error) {
 	var n, i int
 	for i = 0; i < 3 && isDigit(s, i); i++ {
@@ -726,8 +724,7 @@ func cutspace(s string) string {
 	return s
 }
 
-// skip removes the given prefix from value,
-// treating runs of space characters as equivalent.
+// skip 从参数 value 中删除给定的前缀，将连续的空格视为相同的一个。
 func skip(value, prefix string) (string, error) {
 	for len(prefix) > 0 {
 		if prefix[0] == ' ' {

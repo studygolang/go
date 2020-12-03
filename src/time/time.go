@@ -69,32 +69,20 @@ import (
 // Time零值代表时间点January 1, year 1, 00:00:00.000000000 UTC。
 // 因为本时间点一般不会出现在使用中，IsZero 方法提供了检验时间是否显式初始化的一个简单途径。
 //
-// Each Time has associated with it a Location, consulted when computing the
-// presentation form of the time, such as in the Format, Hour, and Year methods.
-// The methods Local, UTC, and In return a Time with a specific location.
-// Changing the location in this way changes only the presentation; it does not
-// change the instant in time being denoted and therefore does not affect the
-// computations described in earlier paragraphs.
+// 每一个时间都具有一个地点信息（及对应地点的时区信息），当计算时间的表示格式时，如Format、Hour和Year等方法，都会考虑该信息。
+// Local、UTC和In方法返回一个指定时区（但指向同一时间点）的Time。
+// 修改地点/时区信息只是会改变其表示；不会修改被表示的时间点，因此也不会影响其计算。
 //
-// Representations of a Time value saved by the GobEncode, MarshalBinary,
-// MarshalJSON, and MarshalText methods store the Time.Location's offset, but not
-// the location name. They therefore lose information about Daylight Saving Time.
+// GobEncode、MarshalBinary、MarshalJSON 和 MarshalText 方法保存的是 Time 值的表现形式的 Time.Location 的偏移量，而不保存位置名称。
+// 因此，它们会丢失有关夏令时的信息。
 //
-// In addition to the required “wall clock” reading, a Time may contain an optional
-// reading of the current process's monotonic clock, to provide additional precision
-// for comparison or subtraction.
-// See the “Monotonic Clocks” section in the package documentation for details.
+// 除了所需的 “wall clock（挂钟时间）” 读数以外, Time 还可以包含当前 process 的 monotonic clock（单调时间）读数，以提供更高精度的比较和减法运算。
+// 更多信息请阅读文档的 “Monotonic Clocks” 部分。
 //
-// Note that the Go == operator compares not just the time instant but also the
-// Location and the monotonic clock reading. Therefore, Time values should not
-// be used as map or database keys without first guaranteeing that the
-// identical Location has been set for all values, which can be achieved
-// through use of the UTC or Local method, and that the monotonic clock reading
-// has been stripped by setting t = t.Round(0). In general, prefer t.Equal(u)
-// to t == u, since t.Equal uses the most accurate comparison available and
-// correctly handles the case when only one of its arguments has a monotonic
-// clock reading.
-//
+// 请注意，Go 的 == 运算符不仅比较瞬时时间，还会比较 Location 和 “monotonic clock” 读数。
+// 因此，不应该将时间作为 Map 或 数据库的 keys，除非保证了为所有值设置了相同的 Location（可以通过 UTC 或 Local 方法来实现），
+// 并通过设置 t = t.Round(0) 来去除 “monotonic clock” 读数。
+// 一般来说，与 t == u 相比，t.Equal(u) 的比较更精确，并且能正确处理两者只有一个具有“monotonic clock” 读数的情况。
 type Time struct {
 	// wall and ext encode the wall time seconds, wall time nanoseconds,
 	// and optional monotonic clock reading in nanoseconds.
@@ -1024,7 +1012,7 @@ func runtimeNano() int64
 // (Callers may want to use 0 as "time not set".)
 var startNano int64 = runtimeNano() - 1
 
-// Now returns the current local time.
+// Now 当前本地时间。
 func Now() Time {
 	sec, nsec, mono := now()
 	mono -= startNano
@@ -1285,60 +1273,52 @@ func norm(hi, lo, base int) (nhi, nlo int) {
 	return hi, lo
 }
 
-// Date returns the Time corresponding to
+// Date 返回一个时区为loc、当地时间为：
 //	yyyy-mm-dd hh:mm:ss + nsec nanoseconds
-// in the appropriate zone for that time in the given location.
+// 的时间点。
 //
-// The month, day, hour, min, sec, and nsec values may be outside
-// their usual ranges and will be normalized during the conversion.
-// For example, October 32 converts to November 1.
+// month、day、hour、min、sec和 nsec 的值可能会超出它们的正常范围，在转换前函数会自动将之规范化。如October 32被修正为November 1。
 //
-// A daylight savings time transition skips or repeats times.
-// For example, in the United States, March 13, 2011 2:15am never occurred,
-// while November 6, 2011 1:15am occurred twice. In such cases, the
-// choice of time zone, and therefore the time, is not well-defined.
-// Date returns a time that is correct in one of the two zones involved
-// in the transition, but it does not guarantee which.
+// 夏时制的时区切换会跳过或重复时间。如，在美国，March 13, 2011 2:15am从来不会出现，而November 6, 2011 1:15am 会出现两次。
+// 此时，时区的选择和时间是没有良好定义的。Date会返回在时区切换的两个时区其中一个时区正确的时间，但本函数不会保证在哪一个时区正确。
 //
-// Date panics if loc is nil.
+// Date 如果loc为nil会panic。
 func Date(year int, month Month, day, hour, min, sec, nsec int, loc *Location) Time {
 	if loc == nil {
 		panic("time: missing Location in call to Date")
 	}
 
-	// Normalize month, overflowing into year.
+	// 常规化月份，溢出/不足部分反馈到年份上。
 	m := int(month) - 1
 	year, m = norm(year, m, 12)
 	month = Month(m) + 1
 
-	// Normalize nsec, sec, min, hour, overflowing into day.
+	// 常规化 nsec, sec, min, hour, 溢出/不足部分反馈到天数上。
 	sec, nsec = norm(sec, nsec, 1e9)
 	min, sec = norm(min, sec, 60)
 	hour, min = norm(hour, min, 60)
 	day, hour = norm(day, hour, 24)
 
-	// Compute days since the absolute epoch.
+	// 计算从 Absolute Zero Year 以来的天数
 	d := daysSinceEpoch(year)
 
-	// Add in days before this month.
+	// 加上本月之前的天数
 	d += uint64(daysBefore[month-1])
 	if isLeap(year) && month >= March {
 		d++ // February 29
 	}
 
-	// Add in days before today.
+	// 加上今天之前的天数
 	d += uint64(day - 1)
 
-	// Add in time elapsed today.
+	// 加上今天已经过去的时间
 	abs := d * secondsPerDay
 	abs += uint64(hour*secondsPerHour + min*secondsPerMinute + sec)
 
 	unix := int64(abs) + (absoluteToInternal + internalToUnix)
 
-	// Look for zone offset for t, so we can adjust to UTC.
-	// The lookup function expects UTC, so we pass t in the
-	// hope that it will not be too close to a zone transition,
-	// and then adjust if it is.
+	// 查找 t 的区域偏移量，这样我们就可以调整到UTC时间。
+	// lookup 函数需要 UTC，所以我们传递 t 是希望它不会太靠近区域转换（not be too close to a zone transition），如果是则进行调整。
 	_, offset, start, end := loc.lookup(unix)
 	if offset != 0 {
 		switch utc := unix - int64(offset); {
