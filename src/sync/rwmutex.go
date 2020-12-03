@@ -10,7 +10,7 @@ import (
 	"unsafe"
 )
 
-// 该文件有一个修改后的副本在 runtime/rwmutex.go. 
+// 该文件有一个修改后的副本在 runtime/rwmutex.go.
 // 如果你在这里做了任何的修改，应该检查是否需要修改上面提到的副本中的文件.
 
 // RWMutex 是一个 读/写 互斥锁.
