@@ -23,14 +23,14 @@ type Organs []*Organ
 func (s Organs) Len() int      { return len(s) }
 func (s Organs) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
-// ByName implements sort.Interface by providing Less and using the Len and
-// Swap methods of the embedded Organs value.
+// ByName 实现了 sort.Interface 通过提供 Less 以及使用嵌入在 Organs 中的
+// Len 和 Swap。
 type ByName struct{ Organs }
 
 func (s ByName) Less(i, j int) bool { return s.Organs[i].Name < s.Organs[j].Name }
 
-// ByWeight implements sort.Interface by providing Less and using the Len and
-// Swap methods of the embedded Organs value.
+// ByWeight 实现了 sort.Interface 通过提供 Less 以及使用嵌入在 Organs 中的
+// Len 和 Swap。
 type ByWeight struct{ Organs }
 
 func (s ByWeight) Less(i, j int) bool { return s.Organs[i].Weight < s.Organs[j].Weight }

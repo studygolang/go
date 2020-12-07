@@ -11,20 +11,20 @@ import (
 )
 
 func ExampleInts() {
-	s := []int{5, 2, 6, 3, 1, 4} // unsorted
+	s := []int{5, 2, 6, 3, 1, 4} // 无序的
 	sort.Ints(s)
 	fmt.Println(s)
 	// Output: [1 2 3 4 5 6]
 }
 
 func ExampleIntsAreSorted() {
-	s := []int{1, 2, 3, 4, 5, 6} // sorted ascending
+	s := []int{1, 2, 3, 4, 5, 6} // 升序的
 	fmt.Println(sort.IntsAreSorted(s))
 
-	s = []int{6, 5, 4, 3, 2, 1} // sorted descending
+	s = []int{6, 5, 4, 3, 2, 1} // 降序的
 	fmt.Println(sort.IntsAreSorted(s))
 
-	s = []int{3, 2, 4, 1, 5} // unsorted
+	s = []int{3, 2, 4, 1, 5} // 无序的
 	fmt.Println(sort.IntsAreSorted(s))
 
 	// Output: true
@@ -33,11 +33,11 @@ func ExampleIntsAreSorted() {
 }
 
 func ExampleFloat64s() {
-	s := []float64{5.2, -1.3, 0.7, -3.8, 2.6} // unsorted
+	s := []float64{5.2, -1.3, 0.7, -3.8, 2.6} // 无序的
 	sort.Float64s(s)
 	fmt.Println(s)
 
-	s = []float64{math.Inf(1), math.NaN(), math.Inf(-1), 0.0} // unsorted
+	s = []float64{math.Inf(1), math.NaN(), math.Inf(-1), 0.0} // 无序的
 	sort.Float64s(s)
 	fmt.Println(s)
 
@@ -46,13 +46,13 @@ func ExampleFloat64s() {
 }
 
 func ExampleFloat64sAreSorted() {
-	s := []float64{0.7, 1.3, 2.6, 3.8, 5.2} // sorted ascending
+	s := []float64{0.7, 1.3, 2.6, 3.8, 5.2} // 升序排序
 	fmt.Println(sort.Float64sAreSorted(s))
 
-	s = []float64{5.2, 3.8, 2.6, 1.3, 0.7} // sorted descending
+	s = []float64{5.2, 3.8, 2.6, 1.3, 0.7} // 降序排序
 	fmt.Println(sort.Float64sAreSorted(s))
 
-	s = []float64{5.2, 1.3, 0.7, 3.8, 2.6} // unsorted
+	s = []float64{5.2, 1.3, 0.7, 3.8, 2.6} // 未排序的
 	fmt.Println(sort.Float64sAreSorted(s))
 
 	// Output: true
@@ -61,7 +61,7 @@ func ExampleFloat64sAreSorted() {
 }
 
 func ExampleReverse() {
-	s := []int{5, 2, 6, 3, 1, 4} // unsorted
+	s := []int{5, 2, 6, 3, 1, 4} // 未排序的
 	sort.Sort(sort.Reverse(sort.IntSlice(s)))
 	fmt.Println(s)
 	// Output: [6 5 4 3 2 1]
@@ -102,11 +102,11 @@ func ExampleSliceStable() {
 		{"Elizabeth", 25},
 	}
 
-	// Sort by name, preserving original order
+	// 按 name 排序，保留原始顺序
 	sort.SliceStable(people, func(i, j int) bool { return people[i].Name < people[j].Name })
 	fmt.Println("By name:", people)
 
-	// Sort by age preserving name order
+	// 按 age 排序保留 name 的顺序
 	sort.SliceStable(people, func(i, j int) bool { return people[i].Age < people[j].Age })
 	fmt.Println("By age,name:", people)
 

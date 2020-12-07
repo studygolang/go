@@ -18,8 +18,8 @@ func (p Person) String() string {
 	return fmt.Sprintf("%s: %d", p.Name, p.Age)
 }
 
-// ByAge implements sort.Interface for []Person based on
-// the Age field.
+// ByAge 基于 []Person 的 Age 域实现了sort.Interface。
+//
 type ByAge []Person
 
 func (a ByAge) Len() int           { return len(a) }
@@ -35,17 +35,17 @@ func Example() {
 	}
 
 	fmt.Println(people)
-	// There are two ways to sort a slice. First, one can define
-	// a set of methods for the slice type, as with ByAge, and
-	// call sort.Sort. In this first example we use that technique.
+	// 排序切片有两种方式。
+	// 第一种是像 ByAge 一样为切片类型定义一系列方法，然后调用 sort.Sort。
+	// 这个例子中就使用的是这种技术。
 	sort.Sort(ByAge(people))
 	fmt.Println(people)
 
-	// The other way is to use sort.Slice with a custom Less
-	// function, which can be provided as a closure. In this
-	// case no methods are needed. (And if they exist, they
-	// are ignored.) Here we re-sort in reverse order: compare
-	// the closure with ByAge.Less.
+	// 另一种方式是使用将自定义的 Less 函数与 sort.Slice 一起使用，
+	// 该函数可以作为闭包被提供。
+	// 在这种方式中不需要方法被提供。（如果方法存在，会被忽略。）
+	// 这里用相反的顺序重新排序：
+	// 比较闭包和 ByAge.Less 就可看出
 	sort.Slice(people, func(i, j int) bool {
 		return people[i].Age > people[j].Age
 	})

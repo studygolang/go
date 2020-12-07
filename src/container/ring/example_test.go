@@ -10,10 +10,10 @@ import (
 )
 
 func ExampleRing_Len() {
-	// Create a new ring of size 4
+	// 创建一个大小为 4 的环
 	r := ring.New(4)
 
-	// Print out its length
+	// 打印出它的长度
 	fmt.Println(r.Len())
 
 	// Output:
@@ -21,19 +21,19 @@ func ExampleRing_Len() {
 }
 
 func ExampleRing_Next() {
-	// Create a new ring of size 5
+	// 创建一个大小为 5 的环
 	r := ring.New(5)
 
-	// Get the length of the ring
+	// 得到环的长度
 	n := r.Len()
 
-	// Initialize the ring with some integer values
+	// 使用一些整数初始化环
 	for i := 0; i < n; i++ {
 		r.Value = i
 		r = r.Next()
 	}
 
-	// Iterate through the ring and print its contents
+	// 遍历环并打印它的内容
 	for j := 0; j < n; j++ {
 		fmt.Println(r.Value)
 		r = r.Next()
@@ -48,19 +48,19 @@ func ExampleRing_Next() {
 }
 
 func ExampleRing_Prev() {
-	// Create a new ring of size 5
+	// 创建一个大小为5的环
 	r := ring.New(5)
 
-	// Get the length of the ring
+	// 得到环的长度
 	n := r.Len()
 
-	// Initialize the ring with some integer values
+	// 使用一些整数初始化环
 	for i := 0; i < n; i++ {
 		r.Value = i
 		r = r.Next()
 	}
 
-	// Iterate through the ring backwards and print its contents
+	// 向后遍历环并打印它的内容
 	for j := 0; j < n; j++ {
 		r = r.Prev()
 		fmt.Println(r.Value)
@@ -75,19 +75,19 @@ func ExampleRing_Prev() {
 }
 
 func ExampleRing_Do() {
-	// Create a new ring of size 5
+	// 创建一个大小为5的环
 	r := ring.New(5)
 
-	// Get the length of the ring
+	// 得到环的长度
 	n := r.Len()
 
-	// Initialize the ring with some integer values
+	// 使用一些整数初始化环
 	for i := 0; i < n; i++ {
 		r.Value = i
 		r = r.Next()
 	}
 
-	// Iterate through the ring and print its contents
+	// 遍历环并打印它的内容
 	r.Do(func(p interface{}) {
 		fmt.Println(p.(int))
 	})
@@ -101,22 +101,22 @@ func ExampleRing_Do() {
 }
 
 func ExampleRing_Move() {
-	// Create a new ring of size 5
+	// 创建一个大小为5的环
 	r := ring.New(5)
 
-	// Get the length of the ring
+	// 得到环的长度
 	n := r.Len()
 
-	// Initialize the ring with some integer values
+	// 使用一些整数初始化环
 	for i := 0; i < n; i++ {
 		r.Value = i
 		r = r.Next()
 	}
 
-	// Move the pointer forward by three steps
+	// 移动指针向前移动3步
 	r = r.Move(3)
 
-	// Iterate through the ring and print its contents
+	// 遍历环并打印它的内容
 	r.Do(func(p interface{}) {
 		fmt.Println(p.(int))
 	})
@@ -130,30 +130,30 @@ func ExampleRing_Move() {
 }
 
 func ExampleRing_Link() {
-	// Create two rings, r and s, of size 2
+	// 创建两个环 r 和 s，大小都为2
 	r := ring.New(2)
 	s := ring.New(2)
 
-	// Get the length of the ring
+	// 得到环的长度
 	lr := r.Len()
 	ls := s.Len()
 
-	// Initialize r with 0s
+	// 将环 r 初始化为 0
 	for i := 0; i < lr; i++ {
 		r.Value = 0
 		r = r.Next()
 	}
 
-	// Initialize s with 1s
+	// 将环 s 初始化为 1
 	for j := 0; j < ls; j++ {
 		s.Value = 1
 		s = s.Next()
 	}
 
-	// Link ring r and ring s
+	// 连接两个环
 	rs := r.Link(s)
 
-	// Iterate through the combined ring and print its contents
+	// 遍历组合后的环并打印它的内容
 	rs.Do(func(p interface{}) {
 		fmt.Println(p.(int))
 	})
@@ -166,22 +166,22 @@ func ExampleRing_Link() {
 }
 
 func ExampleRing_Unlink() {
-	// Create a new ring of size 6
+	// 创建一个大小为 6 的环
 	r := ring.New(6)
 
-	// Get the length of the ring
+	// 获得环的长度
 	n := r.Len()
 
-	// Initialize the ring with some integer values
+	// 使用一些整数初始化环
 	for i := 0; i < n; i++ {
 		r.Value = i
 		r = r.Next()
 	}
 
-	// Unlink three elements from r, starting from r.Next()
+	// 从 r 中取消连接三个元素，开始于 r.Next()
 	r.Unlink(3)
 
-	// Iterate through the remaining ring and print its contents
+	// 遍历剩余的环并打印它的内容
 	r.Do(func(p interface{}) {
 		fmt.Println(p.(int))
 	})

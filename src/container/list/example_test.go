@@ -10,14 +10,14 @@ import (
 )
 
 func Example() {
-	// Create a new list and put some numbers in it.
+	// 创建一个新链表并在其中存储一些数。
 	l := list.New()
 	e4 := l.PushBack(4)
 	e1 := l.PushFront(1)
 	l.InsertBefore(3, e4)
 	l.InsertAfter(2, e1)
 
-	// Iterate through list and print its contents.
+	// 遍历链表并打印其中内容。
 	for e := l.Front(); e != nil; e = e.Next() {
 		fmt.Println(e.Value)
 	}

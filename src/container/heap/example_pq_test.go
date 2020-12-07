@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This example demonstrates a priority queue built using the heap interface.
+// 这个例子演示了使用 heap 接口构建优先级队列。
 package heap_test
 
 import (
@@ -10,21 +10,21 @@ import (
 	"fmt"
 )
 
-// An Item is something we manage in a priority queue.
+// Item 是我们在优先级队列中管理的元素。
 type Item struct {
-	value    string // The value of the item; arbitrary.
-	priority int    // The priority of the item in the queue.
-	// The index is needed by update and is maintained by the heap.Interface methods.
-	index int // The index of the item in the heap.
+	value    string // 项（item）的值；任意的。
+	priority int    // 队列中项的优先级。
+	// 该索引是更新所需的，并由 heap.Interface 方法维护。
+	index int // 堆中的索引。
 }
 
-// A PriorityQueue implements heap.Interface and holds Items.
+// PriorityQueue 实现了 heap.Interface，并保存了 Item。
 type PriorityQueue []*Item
 
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool {
-	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
+	// 我们希望 Pop 给我们最高而非最低的优先级，因此我们使用在这里使用大于。
 	return pq[i].priority > pq[j].priority
 }
 
@@ -45,29 +45,29 @@ func (pq *PriorityQueue) Pop() interface{} {
 	old := *pq
 	n := len(old)
 	item := old[n-1]
-	old[n-1] = nil  // avoid memory leak
-	item.index = -1 // for safety
+	old[n-1] = nil  // 避免内存泄漏
+	item.index = -1 // 处于安全考虑
 	*pq = old[0 : n-1]
 	return item
 }
 
-// update modifies the priority and value of an Item in the queue.
+// update 修改在队列中的 Item 的优先级和值。
 func (pq *PriorityQueue) update(item *Item, value string, priority int) {
 	item.value = value
 	item.priority = priority
 	heap.Fix(pq, item.index)
 }
 
-// This example creates a PriorityQueue with some items, adds and manipulates an item,
-// and then removes the items in priority order.
+// 本示例创建一个包含某些项的 PriorityQueue，添加和操作一个项，
+// 然后按优先级顺序删除这些项。
 func Example_priorityQueue() {
-	// Some items and their priorities.
+	// 一些项和他们的优先级
 	items := map[string]int{
 		"banana": 3, "apple": 2, "pear": 4,
 	}
 
-	// Create a priority queue, put the items in it, and
-	// establish the priority queue (heap) invariants.
+	// 创建一个优先级队列，并把之前创建的项放入，
+	// 建立优先级队列（堆）不变式。
 	pq := make(PriorityQueue, len(items))
 	i := 0
 	for value, priority := range items {
@@ -80,7 +80,7 @@ func Example_priorityQueue() {
 	}
 	heap.Init(&pq)
 
-	// Insert a new item and then modify its priority.
+	// 插入一个新项之后修改它的优先级。
 	item := &Item{
 		value:    "orange",
 		priority: 1,
@@ -88,7 +88,7 @@ func Example_priorityQueue() {
 	heap.Push(&pq, item)
 	pq.update(item, item.value, 5)
 
-	// Take the items out; they arrive in decreasing priority order.
+	// 取出项，按照递减的优先级顺序。
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*Item)
 		fmt.Printf("%.2d:%s ", item.priority, item.value)

@@ -2,43 +2,40 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package heap provides heap operations for any type that implements
-// heap.Interface. A heap is a tree with the property that each node is the
-// minimum-valued node in its subtree.
+// heap 包提供了对任何实现 heap.Interface 接口的数据类型的操作。
+// 堆（heap）是一个有特定属性的树，该树的每个结点是它所在子树的最小值节点（minimum-valued node）。
 //
-// The minimum element in the tree is the root, at index 0.
 //
-// A heap is a common way to implement a priority queue. To build a priority
-// queue, implement the Heap interface with the (negative) priority as the
-// ordering for the Less method, so Push adds items while Pop removes the
-// highest-priority item from the queue. The Examples include such an
-// implementation; the file example_pq_test.go has the complete source.
+// 树中最小的元素是根，它的索引是 0。
+//
+// 堆是实现优先级队列的常用方法。 
+// 构造一个优先级队列，需要实现 Heap 接口和指明优先级，
+// Less 方法指明了优先级次序。
+// Push 添加项，Pop 移除队列中优先级最高的项。
+// 例子中包含了这样的实现； 文件 example_pq_test.go 有完整的源码。
 //
 package heap
 
 import "sort"
 
-// The Interface type describes the requirements
-// for a type using the routines in this package.
-// Any type that implements it may be used as a
-// min-heap with the following invariants (established after
-// Init has been called or if the data is empty or sorted):
+// Interface 类型描述了一个使用这个包中例程的类型的需求。
+// 任何实现 Interface 的类型可以被作为一个带有以下不变量最小堆使用
+// （在调用 Init 后建立，或者在数据为空或已排序时建立）：
 //
 //	!h.Less(j, i) for 0 <= i < h.Len() and 2*i+1 <= j <= 2*i+2 and j < h.Len()
 //
-// Note that Push and Pop in this interface are for package heap's
-// implementation to call. To add and remove things from the heap,
-// use heap.Push and heap.Pop.
+// 注意，这个接口中的 Push 和 Pop 是为了包中堆的实现。 
+// 从堆中添加或删除使用 heap.Push 和 heap.Pop。
 type Interface interface {
 	sort.Interface
-	Push(x interface{}) // add x as element Len()
+	Push(x interface{}) // 添加 x 作为元素的 Len()
 	Pop() interface{}   // remove and return element Len() - 1.
 }
 
-// Init establishes the heap invariants required by the other routines in this package.
-// Init is idempotent with respect to the heap invariants
-// and may be called whenever the heap invariants may have been invalidated.
-// The complexity is O(n) where n = h.Len().
+
+// Init 建立此程序包中其他例程所需的堆不变式。
+// Init 对于堆不变量是等幂的，并且可以在堆不变量无效时调用。
+// n = h.Len() 处的复杂度是 O(log n)。
 func Init(h Interface) {
 	// heapify
 	n := h.Len()
@@ -47,16 +44,16 @@ func Init(h Interface) {
 	}
 }
 
-// Push pushes the element x onto the heap.
-// The complexity is O(log n) where n = h.Len().
+// Push 将元素 x 压入堆中。
+// n = h.Len() 处的复杂度是 O(log n)。
 func Push(h Interface, x interface{}) {
 	h.Push(x)
 	up(h, h.Len()-1)
 }
 
-// Pop removes and returns the minimum element (according to Less) from the heap.
-// The complexity is O(log n) where n = h.Len().
-// Pop is equivalent to Remove(h, 0).
+// Pop 移除并返回堆中最小的元素（最小元素由 Less 决定）。
+// n = h.Len() 处的复杂度是 O(log n)。
+// Pop 等价于 Remove(h, 0)。
 func Pop(h Interface) interface{} {
 	n := h.Len() - 1
 	h.Swap(0, n)
@@ -64,8 +61,8 @@ func Pop(h Interface) interface{} {
 	return h.Pop()
 }
 
-// Remove removes and returns the element at index i from the heap.
-// The complexity is O(log n) where n = h.Len().
+// Remove 移除并返回在堆中索引为 i 的元素。
+// n = h.Len() 处的复杂度是 O(log n)。
 func Remove(h Interface, i int) interface{} {
 	n := h.Len() - 1
 	if n != i {
@@ -77,10 +74,10 @@ func Remove(h Interface, i int) interface{} {
 	return h.Pop()
 }
 
-// Fix re-establishes the heap ordering after the element at index i has changed its value.
-// Changing the value of the element at index i and then calling Fix is equivalent to,
-// but less expensive than, calling Remove(h, i) followed by a Push of the new value.
-// The complexity is O(log n) where n = h.Len().
+// Fix 在索引为 i 的元素的值改变之后重建堆排序。
+// 改变索引为 i 的元素的值，然后调用 Fix ，这与调用 Remove(h, j) 然后压入（Push）一个新值是等效的，
+// 但是更高效。
+// n = h.Len() 处的复杂度是 O(log n)。 
 func Fix(h Interface, i int) {
 	if !down(h, i, h.Len()) {
 		up(h, i)
@@ -89,7 +86,7 @@ func Fix(h Interface, i int) {
 
 func up(h Interface, j int) {
 	for {
-		i := (j - 1) / 2 // parent
+		i := (j - 1) / 2 // 父结点
 		if i == j || !h.Less(j, i) {
 			break
 		}
@@ -102,12 +99,12 @@ func down(h Interface, i0, n int) bool {
 	i := i0
 	for {
 		j1 := 2*i + 1
-		if j1 >= n || j1 < 0 { // j1 < 0 after int overflow
+		if j1 >= n || j1 < 0 { // 在 int 溢出后 j1 < 0
 			break
 		}
 		j := j1 // left child
 		if j2 := j1 + 1; j2 < n && h.Less(j2, j1) {
-			j = j2 // = 2*i + 2  // right child
+			j = j2 // = 2*i + 2  // 右孩子
 		}
 		if !h.Less(j, i) {
 			break

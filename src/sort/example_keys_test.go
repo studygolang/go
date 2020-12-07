@@ -9,46 +9,46 @@ import (
 	"sort"
 )
 
-// A couple of type definitions to make the units clear.
+// 几个类型定义增强可读性。
 type earthMass float64
 type au float64
 
-// A Planet defines the properties of a solar system object.
+// Planet 定义了太阳系对象的属性。
 type Planet struct {
 	name     string
 	mass     earthMass
 	distance au
 }
 
-// By is the type of a "less" function that defines the ordering of its Planet arguments.
+// By 是一个 "less" 函数，这个函数定义了 Planet 参数的顺序。
 type By func(p1, p2 *Planet) bool
 
-// Sort is a method on the function type, By, that sorts the argument slice according to the function.
+// Sort 是函数类型 By 的方法，该方法根据函数对参数切片进行排序。
 func (by By) Sort(planets []Planet) {
 	ps := &planetSorter{
 		planets: planets,
-		by:      by, // The Sort method's receiver is the function (closure) that defines the sort order.
+		by:      by, // Sort 方法的接收者是那个定义排序顺序的函数（闭包）
 	}
 	sort.Sort(ps)
 }
 
-// planetSorter joins a By function and a slice of Planets to be sorted.
+// planetSorter 加入一个 By 函数和一个待排序的 Planets 切片。
 type planetSorter struct {
 	planets []Planet
-	by      func(p1, p2 *Planet) bool // Closure used in the Less method.
+	by      func(p1, p2 *Planet) bool // Less 方法中使用的闭包。
 }
 
-// Len is part of sort.Interface.
+// Len 是 sort.Interface 的一部分。
 func (s *planetSorter) Len() int {
 	return len(s.planets)
 }
 
-// Swap is part of sort.Interface.
+// Swap 是 sort.Interface 的一部分。
 func (s *planetSorter) Swap(i, j int) {
 	s.planets[i], s.planets[j] = s.planets[j], s.planets[i]
 }
 
-// Less is part of sort.Interface. It is implemented by calling the "by" closure in the sorter.
+// Less 是 sort.Interface 的一部分。它通过在排序器中调用 “ by” 闭包来实现。
 func (s *planetSorter) Less(i, j int) bool {
 	return s.by(&s.planets[i], &s.planets[j])
 }
@@ -60,9 +60,9 @@ var planets = []Planet{
 	{"Mars", 0.107, 1.5},
 }
 
-// ExampleSortKeys demonstrates a technique for sorting a struct type using programmable sort criteria.
+// ExampleSortKeys 演示了使用可编程排序标准对结构类型进行排序的技术。
 func Example_sortKeys() {
-	// Closures that order the Planet structure.
+	// 排序 Planet 的闭包。
 	name := func(p1, p2 *Planet) bool {
 		return p1.name < p2.name
 	}
@@ -76,7 +76,7 @@ func Example_sortKeys() {
 		return distance(p2, p1)
 	}
 
-	// Sort the planets by the various criteria.
+	// 按各种标准对行星进行排序。
 	By(name).Sort(planets)
 	fmt.Println("By name:", planets)
 
