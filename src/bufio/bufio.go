@@ -440,8 +440,8 @@ func (b *Reader) ReadBytes(delim byte) ([]byte, error) {
 	return buf, err
 }
 
-// ReadBytes 会一直读取数据直到遇到了第一个指定的结束字节 delim，返回一个包含了 delim 的 string
-// 如果 ReadBytes 在找到 delim 之前遇到了 error, 他将会返回遇到 error 前的 数据 和 error 本身（通常会是 io.EOF）。
+// ReadString 会一直读取数据直到遇到了第一个指定的结束字节 delim，返回一个包含了 delim 的 string
+// 如果 ReadString 在找到 delim 之前遇到了 error, 他将会返回遇到 error 前的 数据 和 error 本身（通常会是 io.EOF）。
 // 当且仅当返回的数据不是以 delim 结尾时， ReadBytes 会返回不为 nil 的 err。
 // 对于简单的使用， 使用 Scanner 可能会更加方便。
 func (b *Reader) ReadString(delim byte) (string, error) {
