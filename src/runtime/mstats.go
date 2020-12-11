@@ -344,7 +344,7 @@ type MemStats struct {
 	// DebugGC 当前未使用。
 	DebugGC bool
 
-	// BySize 按大小报告类分配统计信息。
+	// BySize 报告每一个 sized-classes 分配的统计信息。
 	//
 	// BySize[N] 给出大小为 S 的分配的统计数据，
 	// 其中 BySize[N-1]。Size < S ≤ BySize[N].Size。
