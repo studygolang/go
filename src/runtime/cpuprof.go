@@ -46,7 +46,7 @@ var cpuprof cpuProfile
 
 // SetCPUProfileRate 将 CPU 分析速率设置为每秒 hz 个样本.
 // 如果 hz <= 0，SetCPUProfileRate 关闭分析。
-// 如果 profiler 打开，不首先关闭它，就不能更改速率。
+// 如果 profiler 打开，只有先关闭才能更改速率。
 //
 // 大多数客户端应该使用 runtime/pprof 包或 testing 包的 -test.cpuprofile 标志，
 // 而不是直接调用 SetCPUProfileRate。
