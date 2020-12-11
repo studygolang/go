@@ -11,6 +11,7 @@ import (
 
 // GOMAXPROCS 设置可以同时执行的最大 CPU 数，并返回之前的设置。
 // 默认为 runtime.NumCPU 的值，如果 n<1，不改变当前设置。
+// 可通过 NumCPU 查询运行机器上逻辑 cpu 的个数
 // 当调度程序改进时，这个调用将消失。
 func GOMAXPROCS(n int) int {
 	if GOARCH == "wasm" && n > 1 {
