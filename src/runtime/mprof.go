@@ -373,6 +373,7 @@ var blockprofilerate uint64 // in CPU ticks
 
 // SetBlockProfileRate 控制阻塞 profile 中报告的 goroutine 阻塞事件的比例。
 // profiler 的目标是以纳秒级阻塞的速率对平均一个阻塞事件进行采样。
+//
 // 要在 profile 中包含每个阻塞事件，传递 rate = 1。
 // 要完全关闭 profiling，传递 rate <= 0。
 func SetBlockProfileRate(rate int) {
