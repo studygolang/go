@@ -6,52 +6,49 @@ package sync
 
 import "unsafe"
 
-// defined in package runtime
+// 具体的细节请参考 runtime 包
 
-// Semacquire waits until *s > 0 and then atomically decrements it.
-// It is intended as a simple sleep primitive for use by the synchronization
-// library and should not be used directly.
+// Semacquire 当 *s > 0 时，开始去原子的递减.
+// 它是给同步并发库使用的sleep原语，不应该直接调用该方法
 func runtime_Semacquire(s *uint32)
 
-// SemacquireMutex is like Semacquire, but for profiling contended Mutexes.
-// If lifo is true, queue waiter at the head of wait queue.
-// skipframes is the number of frames to omit during tracing, counting from
-// runtime_SemacquireMutex's caller.
+// SemacquireMutex 跟 Semacquire 类似, 但是是用于互斥对象的竞争分析.
+// 如果 lifo 为 true, waiter 会在 wait 队列的第一个位置.
+// skipframes 是在跟踪期间需要忽略的帧数, 
+// 统计从 runtime_SemacquireMutex's 的调用开始.
 func runtime_SemacquireMutex(s *uint32, lifo bool, skipframes int)
 
-// Semrelease atomically increments *s and notifies a waiting goroutine
-// if one is blocked in Semacquire.
-// It is intended as a simple wakeup primitive for use by the synchronization
-// library and should not be used directly.
-// If handoff is true, pass count directly to the first waiter.
-// skipframes is the number of frames to omit during tracing, counting from
-// runtime_Semrelease's caller.
+// Semrelease 原子的增加 *s 并且去唤醒因为Semacquire而阻塞等待的 goroutine
+// 它是一个底层的唤醒原语给同步机制使用的，不应该直接去调用
+// 如果 handoff 为 true, 会直接将 count 给第一个等待的 waiter.
+// skipframes 是在跟踪期间需要忽略的帧数，
+// 统计从  runtime_Semrelease's  的调用开始.
 func runtime_Semrelease(s *uint32, handoff bool, skipframes int)
 
-// See runtime/sema.go for documentation.
+// 去 runtime/sema.go 看详细的文档.
 func runtime_notifyListAdd(l *notifyList) uint32
 
-// See runtime/sema.go for documentation.
+// 去 runtime/sema.go 看详细的文档.
 func runtime_notifyListWait(l *notifyList, t uint32)
 
-// See runtime/sema.go for documentation.
+// 去 runtime/sema.go 看详细的文档.
 func runtime_notifyListNotifyAll(l *notifyList)
 
-// See runtime/sema.go for documentation.
+// 去 runtime/sema.go 看详细的文档.
 func runtime_notifyListNotifyOne(l *notifyList)
 
-// Ensure that sync and runtime agree on size of notifyList.
+// 确保 sync 和 runtime 上的notifyList大小一致.
 func runtime_notifyListCheck(size uintptr)
 func init() {
 	var n notifyList
 	runtime_notifyListCheck(unsafe.Sizeof(n))
 }
 
-// Active spinning runtime support.
-// runtime_canSpin reports whether spinning makes sense at the moment.
+// runtime提供的自旋功能.
+// runtime_canSpin 代表此刻的自旋是否有意义.
 func runtime_canSpin(i int) bool
 
-// runtime_doSpin does active spinning.
+// runtime_doSpin 开始自旋.
 func runtime_doSpin()
 
 func runtime_nanotime() int64

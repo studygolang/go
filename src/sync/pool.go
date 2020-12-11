@@ -11,55 +11,48 @@ import (
 	"unsafe"
 )
 
-// A Pool is a set of temporary objects that may be individually saved and
-// retrieved.
+// Pool 用来管理临时对象保存和重新使用
 //
-// Any item stored in the Pool may be removed automatically at any time without
-// notification. If the Pool holds the only reference when this happens, the
-// item might be deallocated.
+// 保存在Pool中的对象会不定期、没有任何通知的被自动回收
+// 如果Pool中只存储了引用，这种情况可能也会被回收掉
 //
-// A Pool is safe for use by multiple goroutines simultaneously.
+// Pool 是并发安全的.
 //
-// Pool's purpose is to cache allocated but unused items for later reuse,
-// relieving pressure on the garbage collector. That is, it makes it easy to
-// build efficient, thread-safe free lists. However, it is not suitable for all
-// free lists.
+// Pool的目的是为了缓存已经创建但为使用的对象，方便后续再次使用, 减轻GC的压力. 
+// 也就是说他会非常高效的创建线程安全的列表
+// 但是，它并不是适合所有的空闲列表使用
 //
-// An appropriate use of a Pool is to manage a group of temporary items
-// silently shared among and potentially reused by concurrent independent
-// clients of a package. Pool provides a way to amortize allocation overhead
-// across many clients.
+// Pool 适用于在包内的多个并发的之间的内存共享并可能会再次重用的临时对象，
+// 就是说适应于 共通对象并且后续还会被反复使用的临时对象
+// Pool 提供了一种在多客户端并发下的内存共享负载分摊的方式
 //
-// An example of good use of a Pool is in the fmt package, which maintains a
-// dynamically-sized store of temporary output buffers. The store scales under
-// load (when many goroutines are actively printing) and shrinks when
-// quiescent.
+// 一个很好的例子就是 fmt 包, 一个动态大小的临时输出缓冲区
+// 当有多goroutine同时输出时，会自动扩容；反之，自动收缩
 //
-// On the other hand, a free list maintained as part of a short-lived object is
-// not a suitable use for a Pool, since the overhead does not amortize well in
-// that scenario. It is more efficient to have such objects implement their own
-// free list.
+// 另外，一组生命周期很短的list并不适用于使用Pool 
+// 因为在这种场景下，不能很好的分摊所有负载
+// 使用此类对象实现的正常列表的效率会更高
 //
-// A Pool must not be copied after first use.
+// Pool 在使用后不能被复制
 type Pool struct {
 	noCopy noCopy
 
-	local     unsafe.Pointer // local fixed-size per-P pool, actual type is [P]poolLocal
-	localSize uintptr        // size of the local array
+	local     unsafe.Pointer // 固定在每一个P（GMP中的P）上的 pool, 实际的类型是[P]poolLocal
+	localSize uintptr        // local 数组的大小
 
-	victim     unsafe.Pointer // local from previous cycle
-	victimSize uintptr        // size of victims array
+	victim     unsafe.Pointer // 外部使用完放回到pool中的对象
+	victimSize uintptr        // victims数组大小
 
-	// New optionally specifies a function to generate
-	// a value when Get would otherwise return nil.
-	// It may not be changed concurrently with calls to Get.
+	// New 指定一个function来创建对象，如果Pool中没有可用的对象时
+	// 如果没有指定该函数，那么当Pool中没有可用的对象时会返回nil
+	// 该函数可以在后续的运行中随时去修改，就是你可以改变生成对象的规则
 	New func() interface{}
 }
 
-// Local per-P Pool appendix.
+// 当前 P 上的Pool的附属.
 type poolLocalInternal struct {
-	private interface{} // Can be used only by the respective P.
-	shared  poolChain   // Local P can pushHead/popHead; any P can popTail.
+	private interface{} // 只能再相应的 P 上使用.
+	shared  poolChain   // 当前的 P 可以 pushHead/popHead; 任何 P 可以 popTail.
 }
 
 type poolLocal struct {
@@ -86,7 +79,7 @@ func poolRaceAddr(x interface{}) unsafe.Pointer {
 	return unsafe.Pointer(&poolRaceHash[h%uint32(len(poolRaceHash))])
 }
 
-// Put adds x to the pool.
+// Put 将 x 还给 pool.
 func (p *Pool) Put(x interface{}) {
 	if x == nil {
 		return
@@ -113,14 +106,12 @@ func (p *Pool) Put(x interface{}) {
 	}
 }
 
-// Get selects an arbitrary item from the Pool, removes it from the
-// Pool, and returns it to the caller.
-// Get may choose to ignore the pool and treat it as empty.
-// Callers should not assume any relation between values passed to Put and
-// the values returned by Get.
+// Get 从 Pool 获取一个对象, 并从Pool中移除该对象.
+// Get 无需关心pool中是否有对象.
+// 调用者不能假定Get获取的对象和Put放回的对象有任何的关系.
 //
-// If Get would otherwise return nil and p.New is non-nil, Get returns
-// the result of calling p.New.
+// 如果Get时pool中没有对象，会调用New设置的方法来创建新的对象
+// 否则将会返回一个nil.
 func (p *Pool) Get() interface{} {
 	if race.Enabled {
 		race.Disable()
@@ -278,7 +269,7 @@ func indexLocal(l unsafe.Pointer, i int) *poolLocal {
 	return (*poolLocal)(lp)
 }
 
-// Implemented in runtime.
+// 在 runtime 中实现.
 func runtime_registerPoolCleanup(cleanup func())
 func runtime_procPin() int
 func runtime_procUnpin()

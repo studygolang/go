@@ -8,8 +8,7 @@ package sync
 
 import "unsafe"
 
-// Approximation of notifyList in runtime/sema.go. Size and alignment must
-// agree.
+//  notifyList 在 runtime/sema.go 的类似结构体. 大小和对齐方式必须一致.
 type notifyList struct {
 	wait   uint32
 	notify uint32

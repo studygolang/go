@@ -2,24 +2,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package atomic provides low-level atomic memory primitives
-// useful for implementing synchronization algorithms.
+// Atomic 包提供了底层的内存原子操作，对并发的实现非常必要.
 //
-// These functions require great care to be used correctly.
-// Except for special, low-level applications, synchronization is better
-// done with channels or the facilities of the sync package.
+// 这些方法想要正确的应用需要格外的注意.
+// 除底层的应用程序外，最好使用channel或sync包来实现并发控制
+//「下面是go经典语录，建议结合实际去理解」
 // Share memory by communicating;
 // don't communicate by sharing memory.
 //
-// The swap operation, implemented by the SwapT functions, is the atomic
-// equivalent of:
+// swap操作通过SwapT函数实现is the atomic
+// 在原子上等效于:
 //
 //	old = *addr
 //	*addr = new
 //	return old
 //
-// The compare-and-swap operation, implemented by the CompareAndSwapT
-// functions, is the atomic equivalent of:
+// compare-and-swap操作通过CompareAndSwapT函数实现
+// 在原子上等效于:
 //
 //	if *addr == old {
 //		*addr = new
@@ -27,15 +26,14 @@
 //	}
 //	return false
 //
-// The add operation, implemented by the AddT functions, is the atomic
-// equivalent of:
+// add操作通过AddT函数实现
+// 在原子上等效于:
 //
 //	*addr += delta
 //	return *addr
 //
-// The load and store operations, implemented by the LoadT and StoreT
-// functions, are the atomic equivalents of "return *addr" and
-// "*addr = val".
+// load 和 store 操作, 通过 LoadT and StoreT 函数实现
+// 在原子上等效于 "return *addr" 和 "*addr = val".
 //
 package atomic
 
@@ -43,103 +41,101 @@ import (
 	"unsafe"
 )
 
-// BUG(rsc): On x86-32, the 64-bit functions use instructions unavailable before the Pentium MMX.
+// BUG(rsc): 在 x86 32位下,  64位的函数操作只能兼容到Pentium(奔腾) MMX架构.
 //
-// On non-Linux ARM, the 64-bit functions use instructions unavailable before the ARMv6k core.
+// 在非Linux ARM下, 64位的函数操作只能兼容到 ARMv6k 内核支持的指令.
 //
-// On ARM, x86-32, and 32-bit MIPS,
-// it is the caller's responsibility to arrange for 64-bit
-// alignment of 64-bit words accessed atomically. The first word in a
-// variable or in an allocated struct, array, or slice can be relied upon to be
-// 64-bit aligned.
+// 在 ARM, x86-32, 和 32-bit MIPS 上,
+// 调用方在使用64位函数的操作，需要自行做好64位对齐
+// 可以依赖变量、struct、array、slice中的第一个字进行64位对齐
 
-// SwapInt32 atomically stores new into *addr and returns the previous *addr value.
+// SwapInt32 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapInt32(addr *int32, new int32) (old int32)
 
-// SwapInt64 atomically stores new into *addr and returns the previous *addr value.
+// SwapInt64 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapInt64(addr *int64, new int64) (old int64)
 
-// SwapUint32 atomically stores new into *addr and returns the previous *addr value.
+// SwapUint32 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapUint32(addr *uint32, new uint32) (old uint32)
 
-// SwapUint64 atomically stores new into *addr and returns the previous *addr value.
+// SwapUint64 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapUint64(addr *uint64, new uint64) (old uint64)
 
-// SwapUintptr atomically stores new into *addr and returns the previous *addr value.
+// SwapUintptr 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapUintptr(addr *uintptr, new uintptr) (old uintptr)
 
-// SwapPointer atomically stores new into *addr and returns the previous *addr value.
+// SwapPointer 将 new 的原子的存储到 *addr 中，并返回 *addr 之前的值.
 func SwapPointer(addr *unsafe.Pointer, new unsafe.Pointer) (old unsafe.Pointer)
 
-// CompareAndSwapInt32 executes the compare-and-swap operation for an int32 value.
+// CompareAndSwapInt32 适用于Int32的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapInt32(addr *int32, old, new int32) (swapped bool)
 
-// CompareAndSwapInt64 executes the compare-and-swap operation for an int64 value.
+// CompareAndSwapInt64 适用于Int64的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapInt64(addr *int64, old, new int64) (swapped bool)
 
-// CompareAndSwapUint32 executes the compare-and-swap operation for a uint32 value.
+// CompareAndSwapUint32 适用于Uint32的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapUint32(addr *uint32, old, new uint32) (swapped bool)
 
-// CompareAndSwapUint64 executes the compare-and-swap operation for a uint64 value.
+// CompareAndSwapUint64 适用于Uint64的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapUint64(addr *uint64, old, new uint64) (swapped bool)
 
-// CompareAndSwapUintptr executes the compare-and-swap operation for a uintptr value.
+// CompareAndSwapUintptr 适用于Uintptr的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapUintptr(addr *uintptr, old, new uintptr) (swapped bool)
 
-// CompareAndSwapPointer executes the compare-and-swap operation for a unsafe.Pointer value.
+// CompareAndSwapPointer 适用于Pointer的对比并交换；先对比new是否与old相同，如果相同就交换并返回true，如果不同直接返回false.
 func CompareAndSwapPointer(addr *unsafe.Pointer, old, new unsafe.Pointer) (swapped bool)
 
-// AddInt32 atomically adds delta to *addr and returns the new value.
+// AddInt32 原子的增加delta 到 *addr 上，并返回相加后的值.
 func AddInt32(addr *int32, delta int32) (new int32)
 
-// AddUint32 atomically adds delta to *addr and returns the new value.
-// To subtract a signed positive constant value c from x, do AddUint32(&x, ^uint32(c-1)).
-// In particular, to decrement x, do AddUint32(&x, ^uint32(0)).
+// AddUint32 原子的增加delta 到 *addr 上，并返回相加后的值.
+// 如果想用Add方法来减去一个值c，请使用 AddUint32(&x, ^uint32(c-1)).
+// 如果要直接减去 x, 执行 AddUint32(&x, ^uint32(0)) 即可.
 func AddUint32(addr *uint32, delta uint32) (new uint32)
 
-// AddInt64 atomically adds delta to *addr and returns the new value.
+// AddInt64 原子的增加delta 到 *addr 上，并返回相加后的值.
 func AddInt64(addr *int64, delta int64) (new int64)
 
-// AddUint64 atomically adds delta to *addr and returns the new value.
-// To subtract a signed positive constant value c from x, do AddUint64(&x, ^uint64(c-1)).
-// In particular, to decrement x, do AddUint64(&x, ^uint64(0)).
+// AddUint64 原子的增加delta 到 *addr 上，并返回相加后的值.
+// 如果想用Add方法来减去一个值c，请使用 AddUint64(&x, ^uint64(c-1)).
+// 如果要直接减去 x, 执行 AddUint64(&x, ^uint64(0)).
 func AddUint64(addr *uint64, delta uint64) (new uint64)
 
-// AddUintptr atomically adds delta to *addr and returns the new value.
+// AddUintptr 原子的增加delta 到 *addr 上，并返回相加后的值.
 func AddUintptr(addr *uintptr, delta uintptr) (new uintptr)
 
-// LoadInt32 atomically loads *addr.
+// LoadInt32 原子的获取 *addr 的值.
 func LoadInt32(addr *int32) (val int32)
 
-// LoadInt64 atomically loads *addr.
+// LoadInt64 原子的获取 *addr 的值.
 func LoadInt64(addr *int64) (val int64)
 
-// LoadUint32 atomically loads *addr.
+// LoadUint32 原子的获取 *addr 的值.
 func LoadUint32(addr *uint32) (val uint32)
 
-// LoadUint64 atomically loads *addr.
+// LoadUint64 原子的获取 *addr 的值.
 func LoadUint64(addr *uint64) (val uint64)
 
-// LoadUintptr atomically loads *addr.
+// LoadUintptr 原子的获取 *addr 的值.
 func LoadUintptr(addr *uintptr) (val uintptr)
 
-// LoadPointer atomically loads *addr.
+// LoadPointer 原子的获取 *addr 的值.
 func LoadPointer(addr *unsafe.Pointer) (val unsafe.Pointer)
 
-// StoreInt32 atomically stores val into *addr.
+// StoreInt32 原子的赋值 val 到 *addr.
 func StoreInt32(addr *int32, val int32)
 
-// StoreInt64 atomically stores val into *addr.
+// StoreInt64 原子的赋值 val 到 *addr.
 func StoreInt64(addr *int64, val int64)
 
-// StoreUint32 atomically stores val into *addr.
+// StoreUint32 原子的赋值 val 到 *addr.
 func StoreUint32(addr *uint32, val uint32)
 
-// StoreUint64 atomically stores val into *addr.
+// StoreUint64 原子的赋值 val 到 *addr.
 func StoreUint64(addr *uint64, val uint64)
 
-// StoreUintptr atomically stores val into *addr.
+// StoreUintptr 原子的赋值 val 到 *addr.
 func StoreUintptr(addr *uintptr, val uintptr)
 
-// StorePointer atomically stores val into *addr.
+// StorePointer 原子的赋值 val 到 *addr.
 func StorePointer(addr *unsafe.Pointer, val unsafe.Pointer)
