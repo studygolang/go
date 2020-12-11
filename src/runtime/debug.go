@@ -37,7 +37,7 @@ func GOMAXPROCS(n int) int {
 // NumCPU 返回当前进程可用的逻辑处理器的数量。
 //
 // 进程启动时会检查操作系统可用 CPU 的集合。
-// 进程启动后对操作系统 CPU 分配的更改不会得到反映。
+// 进程启动后对该值不受操作系统 CPU 分配的更改影响。
 func NumCPU() int {
 	return int(ncpu)
 }
