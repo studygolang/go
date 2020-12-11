@@ -49,7 +49,7 @@ type Logger struct {
 	buf    []byte     // 为了缓冲文本再写入
 }
 
-// 新创建一个 Logger。参数 out 设置日志数据写入的目的地。
+// New 创建一个 Logger。参数 out 设置日志数据写入的目的地。
 // 参数 prefix 会被添加到生成的每一条日志前面，如果使用 Lmsgprefix 选项，prefix 会被添加到日志头后面。
 // 参数 flag 规定日志记录的属性。
 func New(out io.Writer, prefix string, flag int) *Logger {
