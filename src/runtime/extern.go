@@ -146,7 +146,7 @@ import "runtime/internal/sys"
 
 // Caller 在调用 goroutine 的堆栈上报告关于函数调用的文件和行号信息。
 // 参数 skip 是要递增的堆栈帧数，0 表示调用者的 Caller。
-// (由于历史原因，Caller 和 Callers 之间跳过的含义不同。)
+// (由于历史原因，Caller 和 Callers 之间 skip 的含义不同。)
 // 返回值报告相应调用的文件中的程序计数器、文件名和行号。
 // 如果无法 recover 信息，则布尔值 ok 为 false。
 func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
