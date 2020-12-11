@@ -26,7 +26,7 @@ GODEBUG 变量控制运行时中的调试变量(debugging variables)。
 	用错误的内容(bad content)来替换对象的内存内容(memory content)。
 
 	cgocheck: 设置 cgocheck=0 将禁用对使用 cgo 错误地将 go 指针传递给非 Go 代码的包的所有检查。
-	设置 cgocheck=1(默认值) 可以进行相对便宜的检查，可能会遗漏一些错误。
+	设置 cgocheck=1(默认值) 可以进行代价小的检查，可能会遗漏一些错误。
 	设置 cgocheck=2 可以进行代价昂贵的检查，不会遗漏任何错误，但会导致程序运行速度变慢。
 
 	efence: 设置 efence=1 会导致分配器(allocator)以一种模式运行，
