@@ -246,7 +246,7 @@ func runfinq() {
 // 并在单独的 goroutine 中运行终结器(obj)。这使得 obj 再次可达，但现在没有关联的 finalizer。
 // 假设没有再次调用 SetFinalizer，那么下次垃圾收集器看到obj不可达时，就会释放obj。
 //
-// SetFinalizer(obj, nil) 清除任何 finalizer 关联的 obj。
+// SetFinalizer(obj, nil) 清除 obj 关联的所有 finalizer  。
 //
 // obj 参数必须是指向通过调用 new、获取复合文字的地址或获取局部变量的地址
 // 来分配的对象的指针。
