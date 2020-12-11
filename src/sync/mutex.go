@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // sync包提供了基本的同步原语，比如排它锁 
-// 除了 Once 和 WaitGroup 类型, most are intended
+// 除了 Once 和 WaitGroup 类型, 
 // 大部分的类型都是为底层并发使用的. 
 // 在实际的业务中更推荐使用Channel来进行并发控制.
 //
