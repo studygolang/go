@@ -23,7 +23,7 @@ GODEBUG 变量控制运行时中的调试变量(debugging variables)。
 	allocfreetrace: 设置 allocfreetrace=1 会导致每个分配都被分析，并在每个对象的分配上打印一个堆栈跟踪。
 
 	clobberfree: 设置 clobberfree=1 会导致垃圾收集器(garbage collector)在释放对象时，
-	用错误的内容(bad content)来清理对象的内存内容(memory content)。
+	用错误的内容(bad content)来替换对象的内存内容(memory content)。
 
 	cgocheck: 设置 cgocheck=0 将禁用对使用 cgo 错误地将 go 指针传递给非 Go 代码的包的所有检查。
 	设置 cgocheck=1(默认值) 可以进行相对便宜的检查，可能会遗漏一些错误。
