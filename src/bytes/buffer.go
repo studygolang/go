@@ -15,7 +15,7 @@ import (
 // smallBufferSize 是初始分配的最小容量。
 const smallBufferSize = 64
 
-// Buffer 是具有读和写方法的可变大小的字节缓冲区。
+// Buffer 是具有 Read 和 Write 方法的可变大小的字节缓冲区。
 // Buffer 的零值是准备使用的空缓冲区。
 type Buffer struct {
 	buf      []byte // 内容是字节 buf[off : len(buf)]
@@ -38,7 +38,7 @@ const (
 	opReadRune4 readOp = 4  // 读取大小为 4 的 rune。
 )
 
-// 如果无法分配内存，将数据存储在缓冲区中，则会将 ErrTooLarge 传递为 panic。
+// 如果无法分配内存来将数据存储在缓冲区中，则会将 ErrTooLarge 传递给 panic。
 var ErrTooLarge = errors.New("bytes.Buffer: too large")
 var errNegativeRead = errors.New("bytes.Buffer: reader returned negative count from Read")
 
@@ -158,7 +158,7 @@ func (b *Buffer) Grow(n int) {
 
 // Write 将 p 的内容追加到缓冲区，根据需要增加缓冲区。
 // 返回值 n 是 p 的长度；err 总是 nil。
-// 如果缓冲区太大，Write 会因 ErrTooLarge 而 panic。
+// 如果缓冲区太大，Write 会 panic 一个 ErrTooLarge。
 func (b *Buffer) Write(p []byte) (n int, err error) {
 	b.lastRead = opInvalid
 	m, ok := b.tryGrowByReslice(len(p))
@@ -243,7 +243,7 @@ func (b *Buffer) WriteTo(w io.Writer) (n int64, err error) {
 			return n, io.ErrShortWrite
 		}
 	}
-	// 缓冲区现在为空；重启。
+	// 缓冲区现在为空；重置。
 	b.Reset()
 	return n, nil
 }
