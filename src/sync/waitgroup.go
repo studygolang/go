@@ -88,7 +88,7 @@ func (wg *WaitGroup) Add(delta int) {
 	}
 }
 
-// Done 减少1个等待的counter.
+// Done 减少 1 个等待的counter.
 func (wg *WaitGroup) Done() {
 	wg.Add(-1)
 }
