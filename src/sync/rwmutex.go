@@ -52,7 +52,7 @@ func (rw *RWMutex) RLock() {
 
 // RUnlock 解锁一个RLock锁定的锁;
 // 它不会影响同时并发读的其他goroutine.
-// 如果取解锁一个没有锁定的锁，会导致报错.
+// 如果去解锁一个没有锁定的锁，会导致报错.
 func (rw *RWMutex) RUnlock() {
 	if race.Enabled {
 		_ = rw.w.state
