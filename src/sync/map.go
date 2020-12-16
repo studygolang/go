@@ -168,7 +168,7 @@ func (e *entry) tryStore(i *interface{}) bool {
 	}
 }
 
-// unexpungeLocked 确保未被标记为删除.
+// unexpungeLocked 确保条目未被标记为删除.
 //
 // 如果该条目已经删除，那么必须先添加到dirty map再释放m.mu锁.
 func (e *entry) unexpungeLocked() (wasExpunged bool) {
