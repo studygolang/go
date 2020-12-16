@@ -15,7 +15,7 @@ import (
 // 每个被等待的goroutine在执行完毕的时候需要执行Done方法来表示完成
 // 同时,调用Wait方法可以阻塞主goroutine直到所有的goroutine完成
 //
-// WaitGroup 在时候后不允许拷贝.
+// WaitGroup 在使用后不允许拷贝.
 type WaitGroup struct {
 	noCopy noCopy
 
