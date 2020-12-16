@@ -26,7 +26,7 @@ type Cond struct {
 	checker copyChecker
 }
 
-// NewCond 使用传入的l锁新的Cond
+// NewCond 使用传入的l锁生成新的 Cond
 func NewCond(l Locker) *Cond {
 	return &Cond{L: l}
 }
