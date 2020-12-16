@@ -34,7 +34,7 @@ const rwmutexMaxReaders = 1 << 30
 
 // RLock 读取锁锁定.
 //
-// 禁止递归调用
+// 禁止递归调用. 阻塞中的 Lock 调用会阻止新的 reader 来获取锁.
 func (rw *RWMutex) RLock() {
 	if race.Enabled {
 		_ = rw.w.state
