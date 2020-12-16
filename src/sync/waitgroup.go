@@ -93,7 +93,7 @@ func (wg *WaitGroup) Done() {
 	wg.Add(-1)
 }
 
-// Wait 阻塞goroutine直到需要等待的goroutine数量为0
+// Wait 阻塞当前 goroutine 直到等待的 WaitGroup的 counter 的值 为 0
 func (wg *WaitGroup) Wait() {
 	statep, semap := wg.state()
 	if race.Enabled {
