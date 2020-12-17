@@ -13,12 +13,12 @@ import (
 
 // Pool 用来管理临时对象保存和重新使用
 //
-// 保存在Pool中的对象会不定期、没有任何通知的被自动回收
-// 如果Pool中只存储了引用，这种情况可能也会被回收掉
+// 保存在 Pool 中的对象会不定期、没有任何通知的被自动回收
+// 如果 Pool 中只存储了引用，这种情况可能也会被回收掉
 //
 // Pool 是并发安全的.
 //
-// Pool的目的是为了缓存已经创建但未使用的对象，方便后续再次使用, 减轻GC的压力. 
+// Pool 的目的是为了缓存已经创建但未使用的对象，方便后续再次使用, 减轻 GC 的压力. 
 // 也就是说他会非常高效的创建线程安全的列表
 // 但是，它并不是适合所有的空闲列表使用
 //
@@ -27,9 +27,9 @@ import (
 // Pool 提供了一种在多客户端并发下的内存共享负载分摊的方式
 //
 // 一个很好的例子就是 fmt 包, 一个动态大小的临时输出缓冲区
-// 当有多goroutine同时输出时，会自动扩容；反之，自动收缩
+// 当有多 goroutine 同时输出时，会自动扩容；反之，自动收缩
 //
-// 另外，一组生命周期很短的list并不适用于使用Pool 
+// 另外，一组生命周期很短的 list 并不适用于使用 Pool 
 // 因为在这种场景下，不能很好的分摊所有负载
 // 使用此类对象实现的正常列表的效率会更高
 //
@@ -37,14 +37,14 @@ import (
 type Pool struct {
 	noCopy noCopy
 
-	local     unsafe.Pointer // 固定在每一个P（GMP中的P）上的 pool, 实际的类型是[P]poolLocal
+	local     unsafe.Pointer // 固定在每一个 P（GMP中的P）上的 pool, 实际的类型是[P]poolLocal
 	localSize uintptr        // local 数组的大小
 
-	victim     unsafe.Pointer // 外部使用完放回到pool中的对象
-	victimSize uintptr        // victims数组大小
+	victim     unsafe.Pointer // 外部使用完放回到 pool 中的对象
+	victimSize uintptr        // victims 数组大小
 
-	// New 指定一个function来创建对象，如果Pool中没有可用的对象时
-	// 如果没有指定该函数，那么当Pool中没有可用的对象时会返回nil
+	// New 指定一个 function 来创建对象，如果 Pool 中没有可用的对象时
+	// 如果没有指定该函数，那么当 Pool 中没有可用的对象时会返回 nil
 	// 该函数可以在后续的运行中随时去修改，就是你可以改变生成对象的规则
 	New func() interface{}
 }
@@ -106,12 +106,12 @@ func (p *Pool) Put(x interface{}) {
 	}
 }
 
-// Get 从 Pool 获取一个对象, 并从Pool中移除该对象.
-// Get 无需关心pool中是否有对象.
-// 调用者不能假定Get获取的对象和Put放回的对象有任何的关系.
+// Get 从 Pool 获取一个对象, 并从 Pool 中移除该对象.
+// Get 无需关心 pool 中是否有对象.
+// 调用者不能假定 Get 获取的对象和 Put 放回的对象有任何的关系.
 //
-// 如果Get时pool中没有对象，会调用New设置的方法来创建新的对象
-// 否则将会返回一个nil.
+// 如果 Get 时 pool 中没有对象，会调用 New 设置的方法来创建新的对象
+// 否则将会返回一个 nil.
 func (p *Pool) Get() interface{} {
 	if race.Enabled {
 		race.Disable()

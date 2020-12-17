@@ -9,7 +9,7 @@ import "unsafe"
 // 具体的细节请参考 runtime 包
 
 // Semacquire 当 *s > 0 时，开始去原子的递减.
-// 它是给同步并发库使用的sleep原语，不应该直接调用该方法
+// 它是给同步并发库使用的 sleep 原语，不应该直接调用该方法
 func runtime_Semacquire(s *uint32)
 
 // SemacquireMutex 跟 Semacquire 类似, 但是是用于互斥对象的竞争分析.
@@ -44,7 +44,7 @@ func init() {
 	runtime_notifyListCheck(unsafe.Sizeof(n))
 }
 
-// runtime提供的自旋功能.
+// runtime 提供的自旋功能.
 // runtime_canSpin 代表此刻的自旋是否有意义.
 func runtime_canSpin(i int) bool
 

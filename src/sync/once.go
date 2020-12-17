@@ -15,11 +15,11 @@ type Once struct {
 	m    Mutex
 }
 
-// 只有在首次支持 Once 的这个实例的是，才会去出发响应的函数
-// 换种说法, 定义一个	var once Once
-// 如果 once.Do(f)被多次调用, 即使f每次都有不一样的值，只有第一次会取调用函数 f。
+// 只有在首次支持 Once 的这个实例的时，才会去触发响应的函数
+// 换种说法, 定义一个 var once Once
+// 如果 once.Do(f) 被多次调用, 即使f每次都有不一样的值，只有第一次会取调用函数 f。
 // 如果要调用不同的f，需要给不同的f分配不同的Once实例，
-// 每个Once实例只会被调用一次.
+// 每个 Once 实例只会被调用一次.
 //
 // Do 只会在初始化时运行一次. 由于 f 是一个无参函数
 // 因此可能需要通过函数的变量来传递参数，类似如下:
@@ -28,7 +28,7 @@ type Once struct {
 // 注意不要在Do的f中再次去调用Do，否则将造成死锁.
 //
 // 如果 f panic, Do 也会认为已经返回了
-// 后续再对Do的调用不会去调用f.
+// 后续再对 Do 的调用不会去调用 f.
 //
 func (o *Once) Do(f func()) {
 	// Note: Here is an incorrect implementation of Do:

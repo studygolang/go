@@ -25,43 +25,43 @@ import (
 type Map struct {
 	mu Mutex
 
-	// 读取read中的
+	// read 字段中的值是并发安全的，不管是否持有 mu 锁
 	//
-	// read 这个字段在加载的时候是线程安全的，但是如果要修改read字段需要持有锁才可以
+	// read 这个字段在加载的时候是线程安全的，但是如果要修改 read 字段需要持有锁才可以
 	//
 	// read 集合中存储的数据并发更新时不需要持有锁
-	// 如果更新已经删除的条目需要复制到 dirty map中且需要持有锁.
+	// 如果更新已经删除的条目需要复制到 dirty map 中且需要持有锁.
 	read atomic.Value // 只读
 
 	// dirty 集合的数据条目操作时不需持有锁
-	// 为了确保尽可能的快从dirty map转到read map中,
-	// dirty map 保存了所有read map中未删除的条目.
+	// 为了确保尽可能的快从 dirty map 转到 read map 中,
+	// dirty map 保存了所有 read map 中未删除的条目.
 	//
 	// 已经删除的条目不会存储在 dirty map. 
-	// 一个已经删除的条目在clean map中必须被标记未清除状态，
-	// 然后新增一个值保存时，可以利用该条目并增加到dirty map中.
+	// 一个已经删除的条目在 clean map 中必须被标记未清除状态，
+	// 然后新增一个值保存时，可以利用该条目并增加到 dirty map 中.
 	//
 	// 如果dirty map是空的,下一次的写入会从 clean map中进行浅拷贝（除掉老旧的条目），
-	// 来初始化dirty map。
+	// 来初始化 dirty map。
 	dirty map[interface{}]*entry
 
-	// misses 存储的是从最后一次更新read map到目前为止来判断条目是否保存在dirty map中的次数
+	// misses 存储的是从最后一次更新read map到目前为止来判断条目是否保存在 dirty map 中的次数
 	//
-	// 一旦 miss的次数超过dirty map的大小，那么就会将dirty map 提到为read map（未修改状态），
-	// 并且下一次存储将会重新初始化dirty map.
+	// 一旦 miss的次数超过 dirty map 的大小，那么就会将 dirty map 提到为 read map（未修改状态），
+	// 并且下一次存储将会重新初始化 dirty map.
 	misses int
 }
 
 // readOnly 是一个只读的 struct，原子的保存在 Map.read 字段.
 type readOnly struct {
 	m       map[interface{}]*entry
-	amended bool // 如果dirty map中保存了一些 m 中没有的条目，那么为 true.
+	amended bool // 如果 dirty map 中保存了一些 m 中没有的条目，那么为 true.
 }
 
-// expunged 是一个指针，标记从dirty map中已经删除的条目
+// expunged 是一个指针，标记从 dirty map 中已经删除的条目
 var expunged = unsafe.Pointer(new(interface{}))
 
-// entry 是 map 和特定key的对应的插槽（存储位置）.
+// entry 是 map 和特定 key 的对应的插槽（存储位置）.
 type entry struct {
 	// p points to the interface{} value stored for the entry.
 	//
@@ -123,7 +123,7 @@ func (e *entry) load() (value interface{}, ok bool) {
 	return *(*interface{})(p), true
 }
 
-// Store 保存一个指定key的value
+// Store 保存一个指定 key 的 value
 func (m *Map) Store(key, value interface{}) {
 	read, _ := m.read.Load().(readOnly)
 	if e, ok := read.m[key]; ok && e.tryStore(&value) {
@@ -155,7 +155,7 @@ func (m *Map) Store(key, value interface{}) {
 
 // tryStore 尝试存储一个值如果条目没有删除.
 //
-// 如果这个条目被删除了，返回false并不会修改这个条目
+// 如果这个条目被删除了，返回 false 并不会修改这个条目
 func (e *entry) tryStore(i *interface{}) bool {
 	for {
 		p := atomic.LoadPointer(&e.p)
@@ -170,21 +170,21 @@ func (e *entry) tryStore(i *interface{}) bool {
 
 // unexpungeLocked 确保条目未被标记为删除.
 //
-// 如果该条目已经删除，那么必须先添加到dirty map再释放m.mu锁.
+// 如果该条目已经删除，那么必须先添加到 dirty map 再释放 m.mu 锁.
 func (e *entry) unexpungeLocked() (wasExpunged bool) {
 	return atomic.CompareAndSwapPointer(&e.p, expunged, nil)
 }
 
-// storeLocked 直接存储一个值到map中.
+// storeLocked 直接存储一个值到 map 中.
 //
 // 必须知道该条目不允许被删除.
 func (e *entry) storeLocked(i *interface{}) {
 	atomic.StorePointer(&e.p, unsafe.Pointer(i))
 }
 
-// LoadOrStore 如果该key存在则直接返回value.
-// 否则，保存value并返回value.
-// loaded 为true表示存在值，false表示保存值成功
+// LoadOrStore 如果该 key 存在则直接返回 value.
+// 否则，保存 value 并返回 value.
+// loaded 为 true 表示存在值，false 表示保存值成功
 func (m *Map) LoadOrStore(key, value interface{}) (actual interface{}, loaded bool) {
 	// Avoid locking if it's a clean hit.
 	read, _ := m.read.Load().(readOnly)
@@ -222,7 +222,7 @@ func (m *Map) LoadOrStore(key, value interface{}) (actual interface{}, loaded bo
 
 // tryLoadOrStore 原子的加载一个值，如果该条目没有被删除
 //
-// 如果条目被删除了, tryLoadOrStore 不会修改这个条目 并 返回ok=false
+// 如果条目被删除了, tryLoadOrStore 不会修改这个条目 并 返回 ok=false
 func (e *entry) tryLoadOrStore(i interface{}) (actual interface{}, loaded, ok bool) {
 	p := atomic.LoadPointer(&e.p)
 	if p == expunged {
@@ -250,8 +250,8 @@ func (e *entry) tryLoadOrStore(i interface{}) (actual interface{}, loaded, ok bo
 	}
 }
 
-// LoadAndDelete 删除一个key，如果该key存在会返回它的value.
-// loaded 表示当前的这个key是否存在.
+// LoadAndDelete 删除一个 key ，如果该 key 存在会返回它的 value.
+// loaded 表示当前的这个 key 是否存在.
 func (m *Map) LoadAndDelete(key interface{}) (value interface{}, loaded bool) {
 	read, _ := m.read.Load().(readOnly)
 	e, ok := read.m[key]
@@ -275,7 +275,7 @@ func (m *Map) LoadAndDelete(key interface{}) (value interface{}, loaded bool) {
 	return nil, false
 }
 
-// Delete 删除指定key的条目.
+// Delete 删除指定 key 的条目.
 func (m *Map) Delete(key interface{}) {
 	m.LoadAndDelete(key)
 }
@@ -292,22 +292,22 @@ func (e *entry) delete() (value interface{}, ok bool) {
 	}
 }
 
-// Range 调用 f 并依次传入map中的每一个key和value.
+// Range 调用 f 并依次传入 map 中的每一个 key 和 value.
 // 如果 f 返回 false, 会停止此次循环遍历.
 //
-// Range 在遍历期间可以保证每个key只会被遍历到一次，但是如果在遍历的期间同时对该key进行了
-// 修改或者删除，那么不能保证该value值的可靠性.
+// Range 在遍历期间可以保证每个 key 只会被遍历到一次，但是如果在遍历的期间同时对该 key 进行了
+// 修改或者删除，那么不能保证该 value 值的可靠性.
 //
-// Range 的时间复杂度是 O(N) 不管中间是否中断，即f 返回 false.
+// Range 的时间复杂度是 O(N) 不管中间是否中断，即 f 返回 false.
 func (m *Map) Range(f func(key, value interface{}) bool) {
 	// 我们需要在调用Range时遍历所有的key.
 	// 如 read.amended 是false, 那 read.m 里面就是所有的key 
 	// 同时也不需要去持有锁来进行操作.
 	read, _ := m.read.Load().(readOnly)
 	if read.amended {
-		// m.dirty 包含了 read.m中没有的key. 
-		// 持有锁后立即将m.dirty 提升到read中
-		// 因为既然range了，那么肯定会miss大于dirty map
+		// m.dirty 包含了 read.m 中没有的 key. 
+		// 持有锁后立即将 m.dirty 提升到 read 中
+		// 因为既然 range 了，那么肯定会 miss 大于 dirty map
 		m.mu.Lock()
 		read, _ = m.read.Load().(readOnly)
 		if read.amended {

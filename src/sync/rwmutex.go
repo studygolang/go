@@ -14,13 +14,13 @@ import (
 // 如果你在这里做了任何的修改，应该检查是否需要修改上面提到的副本中的文件.
 
 // RWMutex 是一个 读/写 互斥锁.
-// 读写锁支持多个reader读取或者一个writer去写.
+// 读写锁支持多个 reader 读取或者一个 writer 去写.
 // RWMutex 的零值时一个未加锁的互斥锁.
 //
 // RWMutex 使用后禁止复制.
 //
-// 如果goroutine拥有 RWMutex 进行读取，并且另外一个goroutine调用Lock
-// 在释放初始化读取锁之前，任何goroutine都不会获取到读取锁
+// 如果goroutine拥有 RWMutex 进行读取，并且另外一个 goroutine 调用 Lock
+// 在释放初始化读取锁之前，任何 goroutine 都不会获取到读取锁
 // 为了确保最终锁的可用，禁止递归调用读取锁.
 type RWMutex struct {
 	w           Mutex  // writer的互斥锁
@@ -51,7 +51,7 @@ func (rw *RWMutex) RLock() {
 }
 
 // RUnlock 解锁一个RLock锁定的锁;
-// 它不会影响同时并发读的其他goroutine.
+// 它不会影响同时并发读的其他 goroutine.
 // 如果去解锁一个没有锁定的锁，会导致报错.
 func (rw *RWMutex) RUnlock() {
 	if race.Enabled {
@@ -106,8 +106,8 @@ func (rw *RWMutex) Lock() {
 // Unlock 解锁一个写入锁.
 // 如果解锁一个没有锁定的写入锁，会导致报错.
 //
-// 和Mutex一样，RWMutex也是不与goroutine绑定的
-// 可以是不同的goroutine分别进行加锁和解锁的操作.
+// 和 Mutex 一样，RWMutex 也是不与 goroutine 绑定的
+// 可以是不同的 goroutine 分别进行加锁和解锁的操作.
 func (rw *RWMutex) Unlock() {
 	if race.Enabled {
 		_ = rw.w.state
@@ -132,7 +132,7 @@ func (rw *RWMutex) Unlock() {
 	}
 }
 
-// RLocker 返回一个Locker接口的读锁的加解锁实现.
+// RLocker 返回一个 Locker 接口的读锁的加解锁实现.
 func (rw *RWMutex) RLocker() Locker {
 	return (*rlocker)(rw)
 }

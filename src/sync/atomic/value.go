@@ -8,9 +8,9 @@ import (
 	"unsafe"
 )
 
-// Value 可以原子的存储或加载类型的value.
-// Value 的零值是nil.
-// 一旦使用store保存后, 这个Value进制不允许再次复制.
+// Value 可以原子的存储或加载类型的 value.
+// Value 的零值是 nil.
+// 一旦使用 store 保存后, 这个 Value 不允许再次复制.
 //
 // Value 在第一次使用后禁止复制.
 type Value struct {
@@ -24,7 +24,7 @@ type ifaceWords struct {
 }
 
 // Load 返回最近一次保存的值.
-// 如果没有值会返回nil.
+// 如果没有值会返回 nil.
 func (v *Value) Load() (x interface{}) {
 	vp := (*ifaceWords)(unsafe.Pointer(v))
 	typ := LoadPointer(&vp.typ)
@@ -40,8 +40,8 @@ func (v *Value) Load() (x interface{}) {
 }
 
 // Store 保存 x 到Value中.
-// Store 到value中的值必须是相同的类型.
-// Store 不同的类型或者nil会导致panic.
+// Store 到 value 中的值必须是相同的类型.
+// Store 不同的类型或者 nil 会导致 panic.
 func (v *Value) Store(x interface{}) {
 	if x == nil {
 		panic("sync/atomic: store of nil value into Value")
@@ -81,6 +81,6 @@ func (v *Value) Store(x interface{}) {
 	}
 }
 
-// 禁止/启用 抢占, 在runtime中实现的.
+// 禁止/启用 抢占, 在 runtime 中实现的.
 func runtime_procPin()
 func runtime_procUnpin()

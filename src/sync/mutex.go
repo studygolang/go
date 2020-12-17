@@ -19,7 +19,7 @@ import (
 func throw(string) // provided by runtime
 
 // Mutex 是一个互斥锁.
-// Mutex 的零值是一个未锁定的Mutex.
+// Mutex 的零值是一个未锁定的 Mutex.
 //
 // Mutex 在使用后，禁止复制.
 type Mutex struct {
@@ -39,41 +39,41 @@ const (
 	mutexStarving
 	mutexWaiterShift = iota
 
-	// Mutex fairness.
+	// Mutex 竞争公平设计.
 	//
 	// Mutex 有两种模式: 正常模式和饥饿模式.
 	// 正常模式下， waiter 在一个先进先出的的队列中, 
-	// 但是被唤醒的goroutine不会直接拥有锁，需要和新来的goroutine进行竞争. 
-	// 新来的goroutine优先级更高,因为他已经运行在CPU上了，所以唤醒的waiter大概率会输
-	// 然后被唤醒的goroutine会被放到队列的最前面
-	// 如果一个waiter超过1ms都没有获取到锁,
-	// 那么mutex会进入到饥饿模式.
+	// 但是被唤醒的 goroutine 不会直接拥有锁，需要和新来的 goroutine 进行竞争. 
+	// 新来的 goroutine 优先级更高,因为他已经运行在 CPU 上了，所以唤醒的 waiter 大概率会输
+	// 然后被唤醒的 goroutine 会被放到队列的最前面
+	// 如果一个 waiter 超过 1ms 都没有获取到锁,
+	// 那么 mutex 会进入到饥饿模式.
 	//
-	// 在饥饿模式下，队列中的goroutine直接获取到锁的拥有权
-	// 新到的goroutine即使发现是未锁定的状态，也不会去获取锁,也不会去自旋. 
+	// 在饥饿模式下，队列中的 goroutine 直接获取到锁的拥有权
+	// 新到的 goroutine 即使发现是未锁定的状态，也不会去获取锁,也不会去自旋. 
 	// 然后它会加入到队列的尾部.
 	//
-	// 如果一个waiter持有锁后发现有一下两种情况之一
-	// (1) 当前waiter是队列中的最后一个 (2) 他等待的时间少于1ms,
+	// 如果一个 waiter 持有锁后发现有一下两种情况之一
+	// (1) 当前 waiter 是队列中的最后一个 (2) 他等待的时间少于 1ms,
 	// 那么会将mutex的模式改为正常模式.
 	//
-	// 正常模式下，可以拥有更好的性能，即使有等待锁的waiter，goroutine也可以连续多次获取锁.
+	// 正常模式下，可以拥有更好的性能，即使有等待锁的 waiter，goroutine 也可以连续多次获取锁.
 	// 饥饿模式是对公平性和性能的平衡，可以避免过长的等待.
 	starvationThresholdNs = 1e6
 )
 
-// Lock 锁定m.
+// Lock 锁定 m.
 // 如果互斥锁处于锁定状态, 那么会阻塞点当前的线程
 // 知道这个互斥锁可以被锁定（即处于解锁状态）.
 func (m *Mutex) Lock() {
-	// 快速方式: mutex没有被锁定.
+	// 快速方式: mutex 没有被锁定.
 	if atomic.CompareAndSwapInt32(&m.state, 0, mutexLocked) {
 		if race.Enabled {
 			race.Acquire(unsafe.Pointer(m))
 		}
 		return
 	}
-	// 这里为什么要创建fast path和slowpath，是为了建立内联来得到优化，原文如下：
+	// 这里为什么要创建 fast path和 slowpath，是为了建立内联来得到优化，原文如下：
 	// Slow path (outlined so that the fast path can be inlined)
 	m.lockSlow()
 }
@@ -168,10 +168,10 @@ func (m *Mutex) lockSlow() {
 }
 
 // Unlock 释放锁.
-// 如果去释放一个没有被加锁的mutex会造成run-time报错.
+// 如果去释放一个没有被加锁的 mutex 会造成 run-time 报错.
 //
-// Mutex 和goroutine没有绑定关系.
-// 可以使用一个goroutine去锁定，然后用另外的goroutine去解锁 .
+// Mutex 和 goroutine 没有绑定关系.
+// 可以使用一个 goroutine 去锁定，然后用另外的 goroutine 去解锁 .
 func (m *Mutex) Unlock() {
 	if race.Enabled {
 		_ = m.state
