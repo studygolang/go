@@ -8,7 +8,7 @@ import "unsafe"
 
 // 具体的细节请参考 runtime 包
 
-// Semacquire 当 *s > 0 时，开始去原子的递减.
+// Semacquire 当等待到 *s > 0 时，开始去原子的递减.
 // 它是给同步并发库使用的 sleep 原语，不应该直接调用该方法
 func runtime_Semacquire(s *uint32)
 
@@ -18,7 +18,7 @@ func runtime_Semacquire(s *uint32)
 // 统计从 runtime_SemacquireMutex's 的调用开始.
 func runtime_SemacquireMutex(s *uint32, lifo bool, skipframes int)
 
-// Semrelease 原子的增加 *s 并且去唤醒因为Semacquire而阻塞等待的 goroutine
+// Semrelease 原子的增加 *s 并且去唤醒因为 Semacquire 而阻塞等待的 goroutine
 // 它是一个底层的唤醒原语给同步机制使用的，不应该直接去调用
 // 如果 handoff 为 true, 会直接将 count 给第一个等待的 waiter.
 // skipframes 是在跟踪期间需要忽略的帧数，

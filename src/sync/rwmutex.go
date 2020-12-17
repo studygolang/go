@@ -23,11 +23,11 @@ import (
 // 在释放初始化读取锁之前，任何 goroutine 都不会获取到读取锁
 // 为了确保最终锁的可用，禁止递归调用读取锁.
 type RWMutex struct {
-	w           Mutex  // writer的互斥锁
-	writerSem   uint32 // writer的信号量
-	readerSem   uint32 // reader的信号量
-	readerCount int32  // reader的数量
-	readerWait  int32  // 进行write需要等待的reader数量
+	w           Mutex  // writer 的互斥锁
+	writerSem   uint32 // writer 的信号量
+	readerSem   uint32 // reader 的信号量
+	readerCount int32  // reader 的数量
+	readerWait  int32  // 进行 write 需要等待的 reader 数量
 }
 
 const rwmutexMaxReaders = 1 << 30
