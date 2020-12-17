@@ -33,7 +33,7 @@ type Map struct {
 	// 如果更新已经删除的条目需要复制到 dirty map 中且需要持有锁.
 	read atomic.Value // 只读
 
-	// dirty 集合的数据条目操作时不需持有锁
+	// dirty 集合的数据条目操作时需持有锁
 	// 为了确保尽可能的快从 dirty map 转到 read map 中,
 	// dirty map 保存了所有 read map 中未删除的条目.
 	//
