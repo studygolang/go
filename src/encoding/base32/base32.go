@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package base32 implements base32 encoding as specified by RFC 4648.
+// base32包实现了 RFC 4648 规定的 base32编码。
 package base32
 
 import (
@@ -14,10 +14,9 @@ import (
  * Encodings
  */
 
-// An Encoding is a radix 32 encoding/decoding scheme, defined by a
-// 32-character alphabet. The most common is the "base32" encoding
-// introduced for SASL GSSAPI and standardized in RFC 4648.
-// The alternate "base32hex" encoding is used in DNSSEC.
+// 编码是由 32 个字符的字母表定义的以 32 为基数的编码或解码方案。
+// 最常见的是为 SASL GSSAPI 引入并在 RFC 4648 中标准化的 "base32" 编码。
+// 在 DNSSEC 中使用备用的 "base32hex" 编码。
 type Encoding struct {
 	encode    [32]byte
 	decodeMap [256]byte
@@ -25,15 +24,14 @@ type Encoding struct {
 }
 
 const (
-	StdPadding rune = '=' // Standard padding character
-	NoPadding  rune = -1  // No padding
+	StdPadding rune = '=' // 标准填充字符
+	NoPadding  rune = -1  // 没有填充
 )
 
 const encodeStd = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 const encodeHex = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
 
-// NewEncoding returns a new Encoding defined by the given alphabet,
-// which must be a 32-byte string.
+// NewEncoding 返回由给定字母生成一个 Encoding，该字母必须是 32 字节的字符串。
 func NewEncoding(encoder string) *Encoding {
 	if len(encoder) != 32 {
 		panic("encoding alphabet is not 32-bytes long")
@@ -52,19 +50,15 @@ func NewEncoding(encoder string) *Encoding {
 	return e
 }
 
-// StdEncoding is the standard base32 encoding, as defined in
-// RFC 4648.
+// StdEncoding 是 RFC 4648 中定义的标准 base32 编码。
 var StdEncoding = NewEncoding(encodeStd)
 
-// HexEncoding is the ``Extended Hex Alphabet'' defined in RFC 4648.
-// It is typically used in DNS.
+// HexEncoding 是 RFC 4648 中定义的 ``扩展的十六进制字母''。
+// 它通常在 DNS 中使用。
 var HexEncoding = NewEncoding(encodeHex)
 
-// WithPadding creates a new encoding identical to enc except
-// with a specified padding character, or NoPadding to disable padding.
-// The padding character must not be '\r' or '\n', must not
-// be contained in the encoding's alphabet and must be a rune equal or
-// below '\xff'.
+// WithPadding 创建一个与 enc 相同的新编码，其带有指定的填充字符或者使用 NoPadding 禁止填充。
+// 填充字符不得为 '\r' 或 '\n'，它不得包含在编码字母中，它的 rune 必须等于或低于 '\xff'。
 func (enc Encoding) WithPadding(padding rune) *Encoding {
 	if padding == '\r' || padding == '\n' || padding > 0xff {
 		panic("invalid padding")
@@ -84,17 +78,14 @@ func (enc Encoding) WithPadding(padding rune) *Encoding {
  * Encoder
  */
 
-// Encode encodes src using the encoding enc, writing
-// EncodedLen(len(src)) bytes to dst.
+// Encode 使用编码 enc 对编码 src 进行编码，将 EncodedLen(len(src)) 字节写入 dst。
 //
-// The encoding pads the output to a multiple of 8 bytes,
-// so Encode is not appropriate for use on individual blocks
-// of a large data stream. Use NewEncoder() instead.
+// 编码会将输出填充为 8 字节的倍数，因因此不建议对大数据流的独立数据块执行此方法，使用 NewEncoder()代替。
 func (enc *Encoding) Encode(dst, src []byte) {
 	for len(src) > 0 {
 		var b [8]byte
 
-		// Unpack 8x 5-bit source blocks into a 5 byte
+		// 将 8 个 5位源块解压缩为5个字节
 		// destination quantum
 		switch len(src) {
 		default:
