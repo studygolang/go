@@ -79,7 +79,6 @@ func (l *List) Back() *Element {
 	return l.root.prev
 }
 
-// lazyInit 惰性地初始化一个零列表值。
 // lazyInit lazily initializes a zero List value.
 func (l *List) lazyInit() {
 	if l.root.next == nil {
