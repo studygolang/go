@@ -4,20 +4,20 @@
 
 //go:generate go run genzfunc.go
 
-// Package sort provides primitives for sorting slices and user-defined
-// collections.
+// sort 包提供了对切
+// 片和用户定义集合进行排序的原语。
 package sort
 
-// A type, typically a collection, that satisfies sort.Interface can be
-// sorted by the routines in this package. The methods require that the
-// elements of the collection be enumerated by an integer index.
+// 满足 sort.Interface 的类型，通常是一个集合(collection)，能使用这个包
+// 中的例程(routine)对其进行排序。 方法要求
+// 集合中的元素由一个整数索引枚举。
 type Interface interface {
-	// Len is the number of elements in the collection.
+	// Len 是集合中元素的数量。
 	Len() int
-	// Less reports whether the element with
-	// index i should sort before the element with index j.
+	// Less 决定索引为 i 的元素是否应该排在
+	// 索引为 j 的元素之前。
 	Less(i, j int) bool
-	// Swap swaps the elements with indexes i and j.
+	// Swap 交换索引为 i 和 j 的元素。
 	Swap(i, j int)
 }
 
@@ -210,9 +210,9 @@ func quickSort(data Interface, a, b, maxDepth int) {
 	}
 }
 
-// Sort sorts data.
-// It makes one call to data.Len to determine n, and O(n*log(n)) calls to
-// data.Less and data.Swap. The sort is not guaranteed to be stable.
+// Sort 对 data 进行排序。
+// 它对 data 调用一次 data.Len 来确定 n，和 O(n*log(n))，调用 data.Less 和 data.Swap。
+// 排序不能保证排序是稳定的。
 func Sort(data Interface) {
 	n := data.Len()
 	quickSort(data, 0, n, maxDepth(n))
@@ -242,17 +242,17 @@ type reverse struct {
 	Interface
 }
 
-// Less returns the opposite of the embedded implementation's Less method.
+// Less 返回和内置（embedded）Less 方法相反的结果。
 func (r reverse) Less(i, j int) bool {
 	return r.Interface.Less(j, i)
 }
 
-// Reverse returns the reverse order for data.
+// Reverse 返回 data 的倒序
 func Reverse(data Interface) Interface {
 	return &reverse{data}
 }
 
-// IsSorted reports whether data is sorted.
+// IsSorted 报告 data 是否有序。
 func IsSorted(data Interface) bool {
 	n := data.Len()
 	for i := n - 1; i > 0; i-- {
@@ -263,20 +263,20 @@ func IsSorted(data Interface) bool {
 	return true
 }
 
-// Convenience types for common cases
+// 常见情况的便利类型。
 
-// IntSlice attaches the methods of Interface to []int, sorting in increasing order.
+// IntSlice 附加 Interface 的方法到 []int 上，并按升序排序。
 type IntSlice []int
 
 func (p IntSlice) Len() int           { return len(p) }
 func (p IntSlice) Less(i, j int) bool { return p[i] < p[j] }
 func (p IntSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-// Sort is a convenience method.
+// Sort 是一个方便的方法。
 func (p IntSlice) Sort() { Sort(p) }
 
-// Float64Slice attaches the methods of Interface to []float64, sorting in increasing order
-// (not-a-number values are treated as less than other values).
+// Float64Slice 将 Interface 的方法附加到 []float64 上，并按升序排序
+//（将非数字值视为小于其他值）。
 type Float64Slice []float64
 
 func (p Float64Slice) Len() int           { return len(p) }
@@ -288,39 +288,39 @@ func isNaN(f float64) bool {
 	return f != f
 }
 
-// Sort is a convenience method.
+// Sort 是一个方便的方法。
 func (p Float64Slice) Sort() { Sort(p) }
 
-// StringSlice attaches the methods of Interface to []string, sorting in increasing order.
+// StringSlice 将 Interface  的方法附加到 []string 上，并按升序排序。
 type StringSlice []string
 
 func (p StringSlice) Len() int           { return len(p) }
 func (p StringSlice) Less(i, j int) bool { return p[i] < p[j] }
 func (p StringSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-// Sort is a convenience method.
+// Sort 是一个便利的方法。
 func (p StringSlice) Sort() { Sort(p) }
 
 // Convenience wrappers for common cases
 
-// Ints sorts a slice of ints in increasing order.
+// Ints 对一个 int 类型的切片按升序进行排序。
 func Ints(a []int) { Sort(IntSlice(a)) }
 
-// Float64s sorts a slice of float64s in increasing order
-// (not-a-number values are treated as less than other values).
+// Float64s 按递增顺序对 float64s 类型的切片进行排序。
+//（将非数字值视为小于其他值）
 func Float64s(a []float64) { Sort(Float64Slice(a)) }
 
-// Strings sorts a slice of strings in increasing order.
+// Strings 按升序对字符串切片进行排序。
 func Strings(a []string) { Sort(StringSlice(a)) }
 
-// IntsAreSorted tests whether a slice of ints is sorted in increasing order.
+// IntsAreSorted 测试一个 int 类型的切片是否是按升序排列的。
 func IntsAreSorted(a []int) bool { return IsSorted(IntSlice(a)) }
 
-// Float64sAreSorted tests whether a slice of float64s is sorted in increasing order
-// (not-a-number values are treated as less than other values).
+// Float64sAreSorted 测试一个 float64 类型的切片是否是按升序排列的。
+//（将非数字值视为小于其他值）
 func Float64sAreSorted(a []float64) bool { return IsSorted(Float64Slice(a)) }
 
-// StringsAreSorted tests whether a slice of strings is sorted in increasing order.
+// StringsAreSorted 测试一个 string 类型的切片是否是按升序排列的。
 func StringsAreSorted(a []string) bool { return IsSorted(StringSlice(a)) }
 
 // Notes on stable sorting:
@@ -349,10 +349,10 @@ func StringsAreSorted(a []string) bool { return IsSorted(StringSlice(a)) }
 //  - Often "optimal" algorithms are optimal in the number of assignments
 //    but Interface has only Swap as operation.
 
-// Stable sorts data while keeping the original order of equal elements.
+// Stable 进行稳定排序，使相等的元素保持原来的顺序。
 //
-// It makes one call to data.Len to determine n, O(n*log(n)) calls to
-// data.Less and O(n*log(n)*log(n)) calls to data.Swap.
+// 它对 data 调用一次 data.Len 确定 n，调用 data.Less 复杂度为 O(n*log(n))，
+// 调用 data.Swap 复杂度是 O(n*log(n)*log(n))。 
 func Stable(data Interface) {
 	stable(data, data.Len())
 }

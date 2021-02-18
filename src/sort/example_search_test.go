@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-// This example demonstrates searching a list sorted in ascending order.
+// 本示例演示搜索按升序排序的列表。
 func ExampleSearch() {
 	a := []int{1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
 	x := 6
@@ -24,9 +24,9 @@ func ExampleSearch() {
 	// found 6 at index 2 in [1 3 6 10 15 21 28 36 45 55]
 }
 
-// This example demonstrates searching a list sorted in descending order.
-// The approach is the same as searching a list in ascending order,
-// but with the condition inverted.
+// 本示例演示搜索按降序排序的列表。
+// 该方法与以升序搜索列表相同，
+// 但条件相反。
 func ExampleSearch_descendingOrder() {
 	a := []int{55, 45, 36, 28, 21, 15, 10, 6, 3, 1}
 	x := 6

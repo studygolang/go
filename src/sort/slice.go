@@ -4,12 +4,12 @@
 
 package sort
 
-// Slice sorts the provided slice given the provided less function.
+// Slice 根据提供的 less 函数对所提供的切片进行排序。
 //
-// The sort is not guaranteed to be stable. For a stable sort, use
-// SliceStable.
+// 不能保证排序是稳定的。对于稳定排序，请使用
+// SliceStable。
 //
-// The function panics if the provided interface is not a slice.
+// 如果提供的接口不是一个切片，函数会出现 panic。
 func Slice(slice interface{}, less func(i, j int) bool) {
 	rv := reflectValueOf(slice)
 	swap := reflectSwapper(slice)
@@ -17,19 +17,19 @@ func Slice(slice interface{}, less func(i, j int) bool) {
 	quickSort_func(lessSwap{less, swap}, 0, length, maxDepth(length))
 }
 
-// SliceStable sorts the provided slice given the provided less
-// function while keeping the original order of equal elements.
+// SliceStable 根据提供的 less 函数对所提供的切片进行排序，
+// 同时使相等的元素保持原来的顺序。
 //
-// The function panics if the provided interface is not a slice.
+// 如果提供的接口不是一个切片，函数会出现 panic。
 func SliceStable(slice interface{}, less func(i, j int) bool) {
 	rv := reflectValueOf(slice)
 	swap := reflectSwapper(slice)
 	stable_func(lessSwap{less, swap}, rv.Len())
 }
 
-// SliceIsSorted tests whether a slice is sorted.
+// SliceIsSorted 测试切片是否已排序。
 //
-// The function panics if the provided interface is not a slice.
+// 如果提供的接口不是一个片，函数会出现 panic。
 func SliceIsSorted(slice interface{}, less func(i, j int) bool) bool {
 	rv := reflectValueOf(slice)
 	n := rv.Len()
